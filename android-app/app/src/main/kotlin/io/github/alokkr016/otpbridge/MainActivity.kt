@@ -74,6 +74,13 @@ class MainActivity : ComponentActivity() {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_SMS) != PackageManager.PERMISSION_GRANTED) {
                 permissions.add(Manifest.permission.READ_SMS)
             }
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECEIVE_SMS) != PackageManager.PERMISSION_GRANTED) {
+                permissions.add(Manifest.permission.RECEIVE_SMS)
+            }
+        } else {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECEIVE_SMS) != PackageManager.PERMISSION_GRANTED) {
+                permissions.add(Manifest.permission.RECEIVE_SMS)
+            }
         }
         if (permissions.isNotEmpty()) {
             requestPermissionLauncher.launch(permissions.toTypedArray())

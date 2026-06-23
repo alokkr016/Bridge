@@ -28,7 +28,7 @@ struct ContentView: View {
             Image(systemName: "key.fill")
                 .font(.system(size: 48))
                 .foregroundStyle(.blue)
-            Text("OTP Bridge")
+            Text("Bridge")
                 .font(.title)
                 .fontWeight(.bold)
             Text("Sync OTPs from Android to Mac")

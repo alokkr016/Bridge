@@ -28,8 +28,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         )
         if PairingManager.shared.isPaired() {
             WebSocketServer.shared.restoreSharedSecret()
-            WebSocketServer.shared.start()
         }
+        WebSocketServer.shared.start()
     }
 
     @objc func handleOpenPairing() {
@@ -47,7 +47,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 defer: false
             )
             window.isReleasedWhenClosed = false
-            window.title = "OTP Bridge Pairing"
+            window.title = "Bridge"
             window.contentView = NSHostingView(rootView: PairingWindow())
             window.center()
             window.makeKeyAndOrderFront(nil)

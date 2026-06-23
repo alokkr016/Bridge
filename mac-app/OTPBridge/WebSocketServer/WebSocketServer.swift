@@ -8,7 +8,7 @@ class WebSocketServer {
 
     private var listener: NWListener?
     private var connection: NWConnection?
-    private var sharedSecret: SymmetricKey?
+    private var sharedSecret: Data?
     private let cryptoManager = CryptoManager.shared
     private let pairingManager = PairingManager.shared
 
@@ -144,7 +144,8 @@ class WebSocketServer {
                     }
                 }
             } catch {
-                NSLog("[OTPBridge] Decryption failed: \(error)")
+                NSLog("[OTPBridge] Encrypted decrypt failed, trying plaintext handshake")
+                handleHandshake(data)
             }
         } else {
             handleHandshake(data)

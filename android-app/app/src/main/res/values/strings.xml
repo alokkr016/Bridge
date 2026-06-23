@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">OTP Bridge</string>
+    <string name="app_name">Bridge</string>
     <string name="pair_with_mac">Pair with Mac</string>
     <string name="scan_qr_code">Scan QR Code</string>
     <string name="connected">Connected</string>

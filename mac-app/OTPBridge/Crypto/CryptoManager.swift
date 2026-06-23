@@ -34,29 +34,28 @@ class CryptoManager {
         return keyPair?.publicKey.rawRepresentation
     }
 
-    func deriveSharedSecret(theirPublicKeyData: Data) throws -> SymmetricKey {
+    func deriveSharedSecret(theirPublicKeyData: Data) throws -> Data {
         guard let myKey = keyPair else {
             throw CryptoError.noKeyPair
         }
 
         let theirPublicKey = try Curve25519.KeyAgreement.PublicKey(rawRepresentation: theirPublicKeyData)
         let sharedSecret = try myKey.sharedSecretFromKeyAgreement(with: theirPublicKey)
-        return sharedSecret.hkdfDerivedSymmetricKey(
-            using: SHA256.self,
-            salt: Data(),
-            sharedInfo: "OTPBridge-v1".data(using: .utf8)!,
-            outputByteCount: 32
-        )
+        let derived = SHA256.hash(data: sharedSecret.withUnsafeBytes { Data($0) })
+        return Data(derived)
     }
 
-    func encrypt(plaintext: Data, key: SymmetricKey) throws -> Data {
-        let sealedBox = try ChaChaPoly.seal(plaintext, using: key)
-        return sealedBox.combined
+    func encrypt(plaintext: Data, key: Data) throws -> Data {
+        let symmetricKey = SymmetricKey(data: key)
+        let sealedBox = try AES.GCM.seal(plaintext, using: symmetricKey)
+        guard let combined = sealedBox.combined else { throw CryptoError.encryptionFailed }
+        return combined
     }
 
-    func decrypt(ciphertext: Data, key: SymmetricKey) throws -> Data {
-        let sealedBox = try ChaChaPoly.SealedBox(combined: ciphertext)
-        return try ChaChaPoly.open(sealedBox, using: key)
+    func decrypt(ciphertext: Data, key: Data) throws -> Data {
+        let symmetricKey = SymmetricKey(data: key)
+        let sealedBox = try AES.GCM.SealedBox(combined: ciphertext)
+        return try AES.GCM.open(sealedBox, using: symmetricKey)
     }
 
     func parsePublicKey(_ data: Data) throws -> Curve25519.KeyAgreement.PublicKey {

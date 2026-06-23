@@ -10,7 +10,7 @@ struct PairingView: View {
                 .font(.title2)
                 .fontWeight(.bold)
 
-            Text("Open OTP Bridge on your Android phone and scan this QR code")
+            Text("Open Bridge on your Android phone and scan this QR code")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)

@@ -30,7 +30,7 @@ struct PairingWindow: View {
                     .font(.headline)
                     .foregroundStyle(.green)
             } else {
-                Text("Open OTP Bridge on your Android phone\nand tap 'Pair with Mac'")
+                Text("Open Bridge on your Android phone\nand tap 'Pair with Mac'")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -71,6 +71,13 @@ struct PairingWindow: View {
         .frame(width: 400, height: 520)
         .onAppear {
             startPairing()
+            Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
+                if WebSocketServer.shared.isConnected && !self.isConnected {
+                    DispatchQueue.main.async {
+                        self.isConnected = true
+                    }
+                }
+            }
         }
     }
 
@@ -85,12 +92,6 @@ struct PairingWindow: View {
             DispatchQueue.main.async {
                 self.isConnected = true
                 self.pairedDeviceId = deviceId
-            }
-        }
-
-        WebSocketServer.shared.onConnectionChanged = { connected in
-            DispatchQueue.main.async {
-                self.isConnected = connected
             }
         }
 
