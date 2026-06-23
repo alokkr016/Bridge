@@ -44,24 +44,17 @@ class CryptoManager(context: Context) {
         val spec = GCMParameterSpec(128, nonce)
         cipher.init(Cipher.ENCRYPT_MODE, key, spec)
         val ciphertext = cipher.doFinal(plaintext)
-        val result = ByteArray(4 + nonce.size + ciphertext.size)
-        val len = ciphertext.size
-        result[0] = (len shr 24).toByte()
-        result[1] = (len shr 16).toByte()
-        result[2] = (len shr 8).toByte()
-        result[3] = len.toByte()
-        System.arraycopy(nonce, 0, result, 4, nonce.size)
-        System.arraycopy(ciphertext, 0, result, 4 + nonce.size, ciphertext.size)
+        // Wire format: [12-byte nonce][ciphertext+tag] — no inner length prefix
+        // The outer TCP frame length is added by sendFrame() in WebSocketClient.
+        val result = ByteArray(nonce.size + ciphertext.size)
+        System.arraycopy(nonce, 0, result, 0, nonce.size)
+        System.arraycopy(ciphertext, 0, result, nonce.size, ciphertext.size)
         return result
     }
 
     fun decrypt(data: ByteArray, aesKey: ByteArray): ByteArray {
-        val len = ((data[0].toInt() and 0xFF) shl 24) or
-                ((data[1].toInt() and 0xFF) shl 16) or
-                ((data[2].toInt() and 0xFF) shl 8) or
-                (data[3].toInt() and 0xFF)
-        val nonce = data.copyOfRange(4, 4 + 12)
-        val ciphertext = data.copyOfRange(4 + 12, 4 + 12 + len)
+        val nonce = data.copyOfRange(0, 12)
+        val ciphertext = data.copyOfRange(12, data.size)
         val key = SecretKeySpec(aesKey, "AES")
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
         val spec = GCMParameterSpec(128, nonce)

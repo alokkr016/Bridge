@@ -24,9 +24,9 @@ class StorageManager {
         }
     }
 
-    func saveOTP(sender: String, otp: String) {
+    func saveOTP(sender: String, otp: String, company: String? = nil) {
         guard let context = modelContext else { return }
-        let record = OTPRecord(sender: sender, otp: otp)
+        let record = OTPRecord(sender: sender, otp: otp, company: company)
         context.insert(record)
         try? context.save()
     }

@@ -12,7 +12,7 @@ class WebSocketServer {
     private let cryptoManager = CryptoManager.shared
     private let pairingManager = PairingManager.shared
 
-    var onOTPReceived: ((String, String, TimeInterval) -> Void)?
+    var onOTPReceived: ((String, String, String?, TimeInterval) -> Void)?
 
     var isConnected = false {
         didSet {
@@ -28,6 +28,13 @@ class WebSocketServer {
     private init() {}
 
     func start() {
+        // If already listening, don't restart — avoids cancelling a healthy listener
+        // when PairingWindow calls start() redundantly.
+        if let existing = listener, existing.state == .ready {
+            NSLog("[OTPBridge] Server already listening, skipping restart")
+            return
+        }
+
         stop()
 
         do {
@@ -41,12 +48,16 @@ class WebSocketServer {
                 self?.handleNewConnection(newConnection)
             }
 
-            listener?.stateUpdateHandler = { state in
+            listener?.stateUpdateHandler = { [weak self] state in
                 switch state {
                 case .ready:
                     NSLog("[OTPBridge] Server listening on port 8420")
                 case .failed(let error):
-                    NSLog("[OTPBridge] Server failed: \(error)")
+                    NSLog("[OTPBridge] Server failed: \(error), will restart")
+                    self?.listener = nil
+                    DispatchQueue.global().asyncAfter(deadline: .now() + 2) {
+                        self?.start()
+                    }
                 default:
                     break
                 }
@@ -71,6 +82,9 @@ class WebSocketServer {
             existing.cancel()
         }
         connection = newConnection
+        // Clear per-connection state so a fresh handshake is required
+        sharedSecret = nil
+        isConnected = false
         newConnection.start(queue: .global())
         readLoop(connection: newConnection)
     }
@@ -137,14 +151,19 @@ class WebSocketServer {
                 if type == "otp" {
                     let sender = json?["sender"] as? String ?? "Unknown"
                     let otp = json?["otp"] as? String ?? ""
+                    let company = json?["company"] as? String
                     let timestamp = json?["timestamp"] as? TimeInterval ?? Date().timeIntervalSince1970
-                    NSLog("[OTPBridge] OTP received: \(otp) from \(sender)")
+                    NSLog("[OTPBridge] OTP received: \(otp) from \(company ?? sender)")
                     DispatchQueue.main.async {
-                        self.onOTPReceived?(sender, otp, timestamp)
+                        self.onOTPReceived?(sender, otp, company, timestamp)
                     }
                 }
             } catch {
-                NSLog("[OTPBridge] Encrypted decrypt failed, trying plaintext handshake")
+                // Decryption failed with stored secret — Android re-paired or cleared data.
+                // Reset and try treating this as a new handshake.
+                NSLog("[OTPBridge] Decryption failed (\(error)), resetting and attempting re-handshake")
+                sharedSecret = nil
+                isConnected = false
                 handleHandshake(data)
             }
         } else {

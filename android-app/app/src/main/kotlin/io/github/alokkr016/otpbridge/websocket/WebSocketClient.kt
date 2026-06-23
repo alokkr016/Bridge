@@ -159,8 +159,8 @@ class WebSocketClient private constructor(private val context: Context) {
     }
 
     fun sendOTP(otpMessage: OTPMessage) {
-        if (!isConnected || sharedSecret == null) {
-            Log.w(TAG, "Not connected, queuing OTP")
+        if (!isConnected || !handshakeComplete || sharedSecret == null) {
+            Log.w(TAG, "Not ready to send OTP (connected=$isConnected, handshake=$handshakeComplete)")
             return
         }
         scope.launch {
@@ -195,6 +195,7 @@ class WebSocketClient private constructor(private val context: Context) {
 
     private fun handleDisconnect() {
         isConnected = false
+        handshakeComplete = false
         sharedSecret = null
         try {
             socket?.close()

@@ -8,6 +8,7 @@ data class OTPMessage(
     @SerialName("type") val type: String = "otp",
     @SerialName("sender") val sender: String,
     @SerialName("otp") val otp: String,
+    @SerialName("company") val company: String? = null,
     @SerialName("timestamp") val timestamp: Long = System.currentTimeMillis()
 )
 

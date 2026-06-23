@@ -23,6 +23,7 @@
 		AA000014 /* StorageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000114; };
 		AA000015 /* MenuBarState.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000115; };
 		AA000016 /* PairingWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000116; };
+		AA000017 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA000117; };
 		AA000020 /* CryptoManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000120; };
 		AA000021 /* OTPExtractorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000121; };
 /* End PBXBuildFile section */
@@ -44,6 +45,7 @@
 		AA000114 /* StorageManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageManager.swift; sourceTree = "<group>"; };
 		AA000115 /* MenuBarState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarState.swift; sourceTree = "<group>"; };
 		AA000116 /* PairingWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairingWindow.swift; sourceTree = "<group>"; };
+		AA000117 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		AA000120 /* CryptoManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CryptoManagerTests.swift; sourceTree = "<group>"; };
 		AA000121 /* OTPExtractorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OTPExtractorTests.swift; sourceTree = "<group>"; };
 		AA000200 /* OTPBridge.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OTPBridge.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -80,6 +82,7 @@
 			isa = PBXGroup;
 			children = (
 				AA000101 /* OTPBridgeApp.swift */,
+				AA000117 /* Assets.xcassets */,
 				AA000404 /* Crypto */,
 				AA000405 /* Pairing */,
 				AA000406 /* WebSocketServer */,
@@ -189,6 +192,7 @@
 			buildPhases = (
 				AA000300 /* Frameworks */,
 				AA000600 /* Sources */,
+				AA000602 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -215,6 +219,17 @@
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
+
+/* Begin PBXResourcesBuildPhase section */
+		AA000602 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AA000017 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXProject section */
 		AA000800 /* Project object */ = {

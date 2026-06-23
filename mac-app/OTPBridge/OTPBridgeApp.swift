@@ -10,8 +10,9 @@ struct OTPBridgeApp: App {
         MenuBarExtra {
             MenuBarView()
         } label: {
-            Image(systemName: "key.fill")
+            Image(systemName: "infinity")
         }
+        .menuBarExtraStyle(.window)
     }
 }
 

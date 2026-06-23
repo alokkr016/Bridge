@@ -13,7 +13,11 @@ object OTPExtractor {
     fun extractOTP(sender: String, text: String): OTPMessage? {
         val contextMatch = OTP_WITH_CONTEXT.find(text)
         if (contextMatch != null) {
-            return OTPMessage(sender = sender, otp = contextMatch.groupValues[1])
+            return OTPMessage(
+                sender = sender,
+                otp = contextMatch.groupValues[1],
+                company = CompanyResolver.resolve(sender, text)
+            )
         }
 
         val hasKeyword = OTP_KEYWORDS.any { text.contains(it, ignoreCase = true) }
@@ -23,6 +27,10 @@ object OTPExtractor {
         if (matches.isEmpty()) return null
 
         val bestMatch = matches.maxByOrNull { it.groupValues[1].length } ?: return null
-        return OTPMessage(sender = sender, otp = bestMatch.groupValues[1])
+        return OTPMessage(
+            sender = sender,
+            otp = bestMatch.groupValues[1],
+            company = CompanyResolver.resolve(sender, text)
+        )
     }
 }

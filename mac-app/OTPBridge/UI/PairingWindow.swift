@@ -9,9 +9,21 @@ struct PairingWindow: View {
 
     var body: some View {
         VStack(spacing: 24) {
-            Image(systemName: "key.fill")
-                .font(.system(size: 48))
-                .foregroundStyle(isConnected ? .green : .blue)
+            Image("Logo")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 72, height: 72)
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .shadow(color: .black.opacity(0.2), radius: 6, y: 3)
+                .overlay(alignment: .bottomTrailing) {
+                    if isConnected {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 22))
+                            .foregroundStyle(.green)
+                            .background(Circle().fill(.background))
+                            .offset(x: 4, y: 4)
+                    }
+                }
 
             Text(isConnected ? "Device Connected!" : "Pair Your Android Device")
                 .font(.title2)

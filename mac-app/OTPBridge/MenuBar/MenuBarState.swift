@@ -17,10 +17,10 @@ class MenuBarState: ObservableObject {
     }
 
     private func setupCallbacks() {
-        WebSocketServer.shared.onOTPReceived = { [weak self] sender, otp, timestamp in
+        WebSocketServer.shared.onOTPReceived = { [weak self] sender, otp, company, _ in
             Task { @MainActor in
                 self?.lastOTP = otp
-                self?.lastSender = sender
+                self?.lastSender = company ?? sender
                 self?.loadRecentOTPs()
             }
         }

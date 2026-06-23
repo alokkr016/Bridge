@@ -1,8 +1,10 @@
 package io.github.alokkr016.otpbridge.ui
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LinkOff
 import androidx.compose.material.icons.filled.Link
@@ -11,8 +13,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import io.github.alokkr016.otpbridge.R
 import io.github.alokkr016.otpbridge.viewmodel.MainViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -37,7 +42,19 @@ fun MainScreen(viewModel: MainViewModel = viewModel()) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("OTP Bridge") },
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Image(
+                            painter = painterResource(R.mipmap.ic_launcher),
+                            contentDescription = null,
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clip(RoundedCornerShape(6.dp))
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text("OTP Bridge")
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer
                 )
