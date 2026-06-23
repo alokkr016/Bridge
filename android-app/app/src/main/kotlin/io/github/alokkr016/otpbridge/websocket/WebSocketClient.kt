@@ -1,0 +1,233 @@
+package io.github.alokkr016.otpbridge.websocket
+
+import android.content.Context
+import android.util.Log
+import io.github.alokkr016.otpbridge.crypto.CryptoManager
+import io.github.alokkr016.otpbridge.crypto.KeyPairStore
+import io.github.alokkr016.otpbridge.notification.OTNotificationListenerService
+import io.github.alokkr016.otpbridge.otp.HandshakeAckMessage
+import io.github.alokkr016.otpbridge.otp.HandshakeMessage
+import io.github.alokkr016.otpbridge.otp.OTPMessage
+import kotlinx.coroutines.*
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import java.io.DataInputStream
+import java.io.DataOutputStream
+import java.net.Socket
+import java.net.InetSocketAddress
+
+class WebSocketClient private constructor(private val context: Context) {
+
+    companion object {
+        private const val TAG = "WebSocketClient"
+        private var instance: WebSocketClient? = null
+
+        fun getInstance(context: Context): WebSocketClient {
+            return instance ?: WebSocketClient(context.applicationContext).also { instance = it }
+        }
+    }
+
+    private val cryptoManager = CryptoManager(context)
+    private val keyPairStore = KeyPairStore(context)
+    private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
+
+    private var socket: Socket? = null
+    private var input: DataInputStream? = null
+    private var output: DataOutputStream? = null
+    private var sharedSecret: ByteArray? = null
+    private var handshakeComplete = false
+    private var isConnected = false
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private var reconnectJob: Job? = null
+    private var reconnectDelay = 1000L
+    private var readJob: Job? = null
+
+    var onConnectionChanged: ((Boolean) -> Unit)? = null
+
+    fun connect() {
+        val pairedDevice = keyPairStore.getPairedDevice() ?: run {
+            Log.w(TAG, "No paired device found")
+            return
+        }
+
+        sharedSecret = pairedDevice.sharedSecret
+
+        scope.launch {
+            try {
+                Log.d(TAG, "Connecting to ${pairedDevice.ip}:${pairedDevice.port}")
+                val s = Socket()
+                s.connect(InetSocketAddress(pairedDevice.ip, pairedDevice.port), 5000)
+                socket = s
+                input = DataInputStream(s.getInputStream())
+                output = DataOutputStream(s.getOutputStream())
+                isConnected = true
+                reconnectDelay = 1000L
+                Log.d(TAG, "Connected")
+
+                withContext(Dispatchers.Main) {
+                    onConnectionChanged?.invoke(true)
+                }
+
+                sendHandshake()
+                startReading()
+            } catch (e: Exception) {
+                Log.e(TAG, "Connection failed: ${e.message}")
+                isConnected = false
+                withContext(Dispatchers.Main) {
+                    onConnectionChanged?.invoke(false)
+                }
+                scheduleReconnect()
+            }
+        }
+    }
+
+    private fun sendHandshake() {
+        try {
+            val keyPair = cryptoManager.getOrCreateKeyPair()
+            val rawPubKey = keyPair.public.encoded.takeLast(32).toByteArray()
+            val handshake = HandshakeMessage(
+                deviceId = cryptoManager.getDeviceId(),
+                publicKey = java.util.Base64.getEncoder().encodeToString(rawPubKey)
+            )
+            val message = json.encodeToString(handshake).toByteArray()
+            sendFrame(message)
+            Log.d(TAG, "Handshake sent")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to send handshake: ${e.message}")
+        }
+    }
+
+    private fun startReading() {
+        readJob = scope.launch {
+            try {
+                while (isConnected && isActive) {
+                    val length = readInt() ?: break
+                    if (length <= 0 || length > 1_000_000) break
+                    val payload = readBytes(length) ?: break
+
+                    if (handshakeComplete && sharedSecret != null) {
+                        try {
+                            val decrypted = cryptoManager.decrypt(payload, sharedSecret!!)
+                            val message = String(decrypted)
+                            val otpMessage = json.decodeFromString(OTPMessage.serializer(), message)
+                            OTNotificationListenerService.onOTPReceived?.invoke(otpMessage)
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Failed to process encrypted message: ${e.message}")
+                        }
+                    } else {
+                        val text = String(payload)
+                        Log.d(TAG, "Received: $text")
+                        try {
+                            val ack = json.decodeFromString(HandshakeAckMessage.serializer(), text)
+                            if (ack.type == "handshake_ack") {
+                                Log.d(TAG, "Handshake acknowledged, switching to encrypted mode")
+                                handshakeComplete = true
+                            }
+                        } catch (_: Exception) {}
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Read error: ${e.message}")
+            }
+            if (isConnected) {
+                handleDisconnect()
+            }
+        }
+    }
+
+    private fun readInt(): Int? {
+        return try {
+            val bytes = ByteArray(4)
+            input?.readFully(bytes)
+            (bytes[0].toInt() and 0xFF) shl 24 or
+                    (bytes[1].toInt() and 0xFF) shl 16 or
+                    (bytes[2].toInt() and 0xFF) shl 8 or
+                    (bytes[3].toInt() and 0xFF)
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    private fun readBytes(length: Int): ByteArray? {
+        return try {
+            val bytes = ByteArray(length)
+            input?.readFully(bytes)
+            bytes
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    fun sendOTP(otpMessage: OTPMessage) {
+        if (!isConnected || sharedSecret == null) {
+            Log.w(TAG, "Not connected, queuing OTP")
+            return
+        }
+        scope.launch {
+            try {
+                val jsonBytes = json.encodeToString(otpMessage).toByteArray()
+                val encrypted = cryptoManager.encrypt(jsonBytes, sharedSecret!!)
+                sendFrame(encrypted)
+                Log.d(TAG, "OTP sent: ${otpMessage.otp}")
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to send OTP: ${e.message}")
+            }
+        }
+    }
+
+    private fun sendFrame(data: ByteArray) {
+        scope.launch(Dispatchers.IO) {
+            try {
+                val lengthBytes = byteArrayOf(
+                    ((data.size shr 24) and 0xFF).toByte(),
+                    ((data.size shr 16) and 0xFF).toByte(),
+                    ((data.size shr 8) and 0xFF).toByte(),
+                    (data.size and 0xFF).toByte()
+                )
+                output?.write(lengthBytes)
+                output?.write(data)
+                output?.flush()
+            } catch (e: Exception) {
+                Log.e(TAG, "Send failed: ${e.message}")
+            }
+        }
+    }
+
+    private fun handleDisconnect() {
+        isConnected = false
+        sharedSecret = null
+        try {
+            socket?.close()
+        } catch (_: Exception) {}
+        socket = null
+        input = null
+        output = null
+        scope.launch(Dispatchers.Main) {
+            onConnectionChanged?.invoke(false)
+        }
+        scheduleReconnect()
+    }
+
+    private fun scheduleReconnect() {
+        if (reconnectJob?.isActive == true) return
+        reconnectJob = scope.launch {
+            delay(reconnectDelay)
+            reconnectDelay = minOf(reconnectDelay * 2, 30000L)
+            Log.d(TAG, "Attempting reconnect...")
+            connect()
+        }
+    }
+
+    fun disconnect() {
+        reconnectJob?.cancel()
+        readJob?.cancel()
+        scope.launch(Dispatchers.IO) {
+            handleDisconnect()
+        }
+    }
+
+    fun destroy() {
+        disconnect()
+        scope.cancel()
+    }
+}

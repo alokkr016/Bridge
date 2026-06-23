@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">OTP Bridge</string>
+    <string name="pair_with_mac">Pair with Mac</string>
+    <string name="scan_qr_code">Scan QR Code</string>
+    <string name="connected">Connected</string>
+    <string name="disconnected">Disconnected</string>
+    <string name="recent_otps">Recent OTPs</string>
+    <string name="no_otps">No OTPs received yet</string>
+    <string name="notification_listener_permission">Please enable OTP Bridge notification access in Settings</string>
+    <string name="pairing_instructions">Point your camera at the QR code displayed on your Mac</string>
+</resources>

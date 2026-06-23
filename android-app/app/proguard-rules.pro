@@ -1,0 +1,4 @@
+-keep class io.github.alokkr016.otpbridge.database.** { *; }
+-keep class kotlinx.serialization.** { *; }
+-dontwarn okhttp3.**
+-keep class okhttp3.** { *; }
