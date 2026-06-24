@@ -39,6 +39,15 @@ class StorageManager {
         return (try? context.fetch(descriptor)) ?? []
     }
 
+    func clearAllOTPs() {
+        guard let context = modelContext else { return }
+        let descriptor = FetchDescriptor<OTPRecord>()
+        if let records = try? context.fetch(descriptor) {
+            for record in records { context.delete(record) }
+            try? context.save()
+        }
+    }
+
     func clearOldOTPs(olderThan interval: TimeInterval = 86400) {
         guard let context = modelContext else { return }
         let cutoff = Date().addingTimeInterval(-interval)

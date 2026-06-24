@@ -225,6 +225,21 @@ struct MenuBarView: View {
             footerButton(title: "Pair New Device…", icon: "qrcode") {
                 NotificationCenter.default.post(name: openPairingNotification, object: nil)
             }
+            if PairingManager.shared.isPaired() {
+                footerButton(title: "Forget Device", icon: "minus.circle", destructive: true) {
+                    PairingManager.shared.clearPairing()
+                    WebSocketServer.shared.stop()
+                    recentOTPs = []
+                    lastOTP = nil
+                }
+            }
+            if !recentOTPs.isEmpty {
+                footerButton(title: "Clear History", icon: "trash", destructive: true) {
+                    StorageManager.shared.clearAllOTPs()
+                    recentOTPs = []
+                    lastOTP = nil
+                }
+            }
             footerButton(title: "Quit Bridge", icon: "power", shortcut: "⌘Q") {
                 NSApplication.shared.terminate(nil)
             }
@@ -233,15 +248,16 @@ struct MenuBarView: View {
         .padding(.vertical, 5)
     }
 
-    private func footerButton(title: String, icon: String, shortcut: String? = nil, action: @escaping () -> Void) -> some View {
+    private func footerButton(title: String, icon: String, shortcut: String? = nil, destructive: Bool = false, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 9) {
                 Image(systemName: icon)
                     .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(destructive ? .red : .secondary)
                     .frame(width: 15)
                 Text(title)
                     .font(.system(size: 12))
+                    .foregroundStyle(destructive ? .red : .primary)
                 Spacer()
                 if let shortcut {
                     Text(shortcut)

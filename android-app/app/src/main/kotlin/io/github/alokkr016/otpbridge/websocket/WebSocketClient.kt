@@ -1,5 +1,7 @@
 package io.github.alokkr016.otpbridge.websocket
 
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.util.Log
 import io.github.alokkr016.otpbridge.crypto.CryptoManager
@@ -43,6 +45,7 @@ class WebSocketClient private constructor(private val context: Context) {
     private var readJob: Job? = null
 
     var onConnectionChanged: ((Boolean) -> Unit)? = null
+    var onClipboardReceived: ((String) -> Unit)? = null
 
     fun connect() {
         val pairedDevice = keyPairStore.getPairedDevice() ?: run {
@@ -109,8 +112,24 @@ class WebSocketClient private constructor(private val context: Context) {
                         try {
                             val decrypted = cryptoManager.decrypt(payload, sharedSecret!!)
                             val message = String(decrypted)
-                            val otpMessage = json.decodeFromString(OTPMessage.serializer(), message)
-                            OTNotificationListenerService.onOTPReceived?.invoke(otpMessage)
+                            val msgJson = org.json.JSONObject(message)
+                            when (msgJson.optString("type")) {
+                                "otp" -> {
+                                    val otpMessage = json.decodeFromString(OTPMessage.serializer(), message)
+                                    OTNotificationListenerService.onOTPReceived?.invoke(otpMessage)
+                                }
+                                "clipboard" -> {
+                                    val text = msgJson.optString("text")
+                                    if (text.isNotEmpty()) {
+                                        withContext(Dispatchers.Main) {
+                                            val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                            cm.setPrimaryClip(ClipData.newPlainText("Bridge", text))
+                                            onClipboardReceived?.invoke(text)
+                                            Log.d(TAG, "Clipboard received from Mac")
+                                        }
+                                    }
+                                }
+                            }
                         } catch (e: Exception) {
                             Log.e(TAG, "Failed to process encrypted message: ${e.message}")
                         }
@@ -155,6 +174,20 @@ class WebSocketClient private constructor(private val context: Context) {
             bytes
         } catch (e: Exception) {
             null
+        }
+    }
+
+    fun sendClipboard(text: String) {
+        if (!isConnected || !handshakeComplete || sharedSecret == null) return
+        scope.launch {
+            try {
+                val payload = """{"type":"clipboard","text":${org.json.JSONObject.quote(text)}}""".toByteArray()
+                val encrypted = cryptoManager.encrypt(payload, sharedSecret!!)
+                sendFrame(encrypted)
+                Log.d(TAG, "Clipboard sent to Mac")
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to send clipboard: ${e.message}")
+            }
         }
     }
 

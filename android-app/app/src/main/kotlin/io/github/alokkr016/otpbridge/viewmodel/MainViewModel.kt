@@ -34,6 +34,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     OTPEntity(
                         sender = otpMessage.sender,
                         otp = otpMessage.otp,
+                        company = otpMessage.company,
                         timestamp = otpMessage.timestamp
                     )
                 )

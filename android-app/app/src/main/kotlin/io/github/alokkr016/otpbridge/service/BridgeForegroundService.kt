@@ -3,6 +3,7 @@ package io.github.alokkr016.otpbridge.service
 import android.app.Notification
 import android.app.PendingIntent
 import android.app.Service
+import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.net.wifi.WifiManager
@@ -26,6 +27,8 @@ class BridgeForegroundService : Service() {
     private val webSocketClient by lazy { WebSocketClient.getInstance(this) }
     private var wakeLock: PowerManager.WakeLock? = null
     private var wifiLock: WifiManager.WifiLock? = null
+    private var clipboardListener: ClipboardManager.OnPrimaryClipChangedListener? = null
+    private var lastSentClip: String? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -52,10 +55,28 @@ class BridgeForegroundService : Service() {
         }
 
         webSocketClient.connect()
+
+        // Track clipboard text received from Mac so we don't echo it back
+        webSocketClient.onClipboardReceived = { text -> lastSentClip = text }
+
+        // Watch Android clipboard and forward changes to Mac
+        val cm = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        clipboardListener = ClipboardManager.OnPrimaryClipChangedListener {
+            val text = cm.primaryClip?.getItemAt(0)?.text?.toString() ?: return@OnPrimaryClipChangedListener
+            if (text.isNotEmpty() && text != lastSentClip) {
+                lastSentClip = null
+                webSocketClient.sendClipboard(text)
+            }
+        }
+        cm.addPrimaryClipChangedListener(clipboardListener!!)
+
         return START_STICKY
     }
 
     override fun onDestroy() {
+        clipboardListener?.let {
+            (getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager).removePrimaryClipChangedListener(it)
+        }
         wakeLock?.release()
         wifiLock?.release()
         webSocketClient.disconnect()

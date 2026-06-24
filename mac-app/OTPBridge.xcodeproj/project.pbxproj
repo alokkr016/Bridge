@@ -8,10 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		AA000001 /* OTPBridgeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000101; };
-		AA000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000102; };
 		AA000003 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000103; };
-		AA000004 /* PairingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000104; };
-		AA000005 /* StatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000105; };
 		AA000006 /* CryptoManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000106; };
 		AA000007 /* KeyPairStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000107; };
 		AA000008 /* PairingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000108; };
@@ -21,7 +18,6 @@
 		AA000012 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000112; };
 		AA000013 /* OTPRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000113; };
 		AA000014 /* StorageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000114; };
-		AA000015 /* MenuBarState.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000115; };
 		AA000016 /* PairingWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000116; };
 		AA000017 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA000117; };
 		AA000020 /* CryptoManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000120; };
@@ -30,10 +26,7 @@
 
 /* Begin PBXFileReference section */
 		AA000101 /* OTPBridgeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OTPBridgeApp.swift; sourceTree = "<group>"; };
-		AA000102 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		AA000103 /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
-		AA000104 /* PairingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairingView.swift; sourceTree = "<group>"; };
-		AA000105 /* StatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusView.swift; sourceTree = "<group>"; };
 		AA000106 /* CryptoManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CryptoManager.swift; sourceTree = "<group>"; };
 		AA000107 /* KeyPairStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyPairStore.swift; sourceTree = "<group>"; };
 		AA000108 /* PairingManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairingManager.swift; sourceTree = "<group>"; };
@@ -43,7 +36,6 @@
 		AA000112 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
 		AA000113 /* OTPRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OTPRecord.swift; sourceTree = "<group>"; };
 		AA000114 /* StorageManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageManager.swift; sourceTree = "<group>"; };
-		AA000115 /* MenuBarState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarState.swift; sourceTree = "<group>"; };
 		AA000116 /* PairingWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairingWindow.swift; sourceTree = "<group>"; };
 		AA000117 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		AA000120 /* CryptoManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CryptoManagerTests.swift; sourceTree = "<group>"; };
@@ -167,7 +159,6 @@
 			isa = PBXGroup;
 			children = (
 				AA000103 /* MenuBarView.swift */,
-				AA000115 /* MenuBarState.swift */,
 			);
 			path = MenuBar;
 			sourceTree = "<group>";
@@ -175,10 +166,7 @@
 		AA000411 /* UI */ = {
 			isa = PBXGroup;
 			children = (
-				AA000102 /* ContentView.swift */,
-				AA000104 /* PairingView.swift */,
 				AA000116 /* PairingWindow.swift */,
-				AA000105 /* StatusView.swift */,
 			);
 			path = UI;
 			sourceTree = "<group>";
@@ -273,10 +261,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AA000001 /* OTPBridgeApp.swift in Sources */,
-				AA000002 /* ContentView.swift in Sources */,
 				AA000003 /* MenuBarView.swift in Sources */,
-				AA000004 /* PairingView.swift in Sources */,
-				AA000005 /* StatusView.swift in Sources */,
 				AA000006 /* CryptoManager.swift in Sources */,
 				AA000007 /* KeyPairStore.swift in Sources */,
 				AA000008 /* PairingManager.swift in Sources */,
@@ -286,7 +271,6 @@
 				AA000012 /* NotificationManager.swift in Sources */,
 				AA000013 /* OTPRecord.swift in Sources */,
 				AA000014 /* StorageManager.swift in Sources */,
-				AA000015 /* MenuBarState.swift in Sources */,
 				AA000016 /* PairingWindow.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -346,6 +330,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_NSMainStoryboardFile = "";
 				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
@@ -370,6 +355,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_NSMainStoryboardFile = "";
 				INFOPLIST_KEY_NSPrincipalClass = NSApplication;

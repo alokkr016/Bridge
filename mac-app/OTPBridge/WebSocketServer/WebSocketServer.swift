@@ -75,6 +75,9 @@ class WebSocketServer {
         listener = nil
         connection = nil
         isConnected = false
+        DispatchQueue.main.async {
+            ClipboardManager.shared.stopSyncing()
+        }
     }
 
     private func handleNewConnection(_ newConnection: NWConnection) {
@@ -157,6 +160,13 @@ class WebSocketServer {
                     DispatchQueue.main.async {
                         self.onOTPReceived?(sender, otp, company, timestamp)
                     }
+                } else if type == "clipboard" {
+                    if let text = json?["text"] as? String {
+                        NSLog("[OTPBridge] Clipboard received from Android")
+                        DispatchQueue.main.async {
+                            ClipboardManager.shared.receiveFromAndroid(text)
+                        }
+                    }
                 }
             } catch {
                 // Decryption failed with stored secret — Android re-paired or cleared data.
@@ -206,6 +216,7 @@ class WebSocketServer {
 
             DispatchQueue.main.async {
                 self.onHandshakeReceived?(deviceId, publicKeyData)
+                ClipboardManager.shared.startSyncing()
             }
             NSLog("[OTPBridge] Connection established!")
         } catch {
@@ -229,6 +240,18 @@ class WebSocketServer {
                 NSLog("[OTPBridge] Send error: \(error)")
             }
         })
+    }
+
+    func sendClipboard(_ text: String) {
+        guard let secret = sharedSecret else { return }
+        do {
+            let payload = try JSONSerialization.data(withJSONObject: ["type": "clipboard", "text": text])
+            let encrypted = try cryptoManager.encrypt(plaintext: payload, key: secret)
+            sendBinary(encrypted)
+            NSLog("[OTPBridge] Clipboard sent to Android")
+        } catch {
+            NSLog("[OTPBridge] Failed to send clipboard: \(error)")
+        }
     }
 
     func restoreSharedSecret() {

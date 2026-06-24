@@ -1,4 +1,5 @@
 import SwiftUI
+import ServiceManagement
 
 let openPairingNotification = Notification.Name("openPairingWindow")
 
@@ -27,10 +28,24 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             name: openPairingNotification,
             object: nil
         )
+        registerLoginItem()
         if PairingManager.shared.isPaired() {
             WebSocketServer.shared.restoreSharedSecret()
         }
         WebSocketServer.shared.start()
+    }
+
+    /// Register the app to launch automatically at login (macOS 13+).
+    private func registerLoginItem() {
+        guard #available(macOS 13.0, *) else { return }
+        do {
+            if SMAppService.mainApp.status != .enabled {
+                try SMAppService.mainApp.register()
+                NSLog("Registered as login item")
+            }
+        } catch {
+            NSLog("Failed to register login item: \(error.localizedDescription)")
+        }
     }
 
     @objc func handleOpenPairing() {

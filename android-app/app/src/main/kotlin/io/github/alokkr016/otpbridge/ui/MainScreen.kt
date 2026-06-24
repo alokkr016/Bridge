@@ -152,7 +152,7 @@ fun MainScreen(viewModel: MainViewModel = viewModel()) {
             } else {
                 LazyColumn {
                     items(recentOTPs) { otp ->
-                        OTPHistoryItem(otp.sender, otp.otp, otp.timestamp)
+                        OTPHistoryItem(otp.company ?: otp.sender, otp.otp, otp.timestamp)
                     }
                 }
             }

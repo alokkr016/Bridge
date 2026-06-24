@@ -47,8 +47,9 @@ OTP Bridge eliminates this friction:
 | Transport | Raw TCP over local Wi-Fi (port 8420) |
 | Framing | `[4-byte big-endian length][payload]` |
 | Handshake | JSON `{"type":"handshake","device_id":"...","public_key":"..."}` |
-| Encryption | ChaCha20-Poly1305 with X25519-derived shared secret |
+| Encryption | AES-256-GCM with X25519-derived shared secret |
 | Key Exchange | X25519 (Curve25519) ECDH during pairing via QR code |
+| Key Derivation | SHA-256 of raw ECDH output |
 
 ### Pairing Flow
 
@@ -90,11 +91,11 @@ Mac                              Android
 | Component | Algorithm |
 |-----------|-----------|
 | Key Exchange | X25519 (Curve25519) ECDH |
-| Symmetric Cipher | ChaCha20-Poly1305 |
-| Key Derivation | HKDF-SHA256 with salt `"OTPBridge-v1"` |
+| Symmetric Cipher | AES-256-GCM |
+| Key Derivation | SHA-256 of raw ECDH shared secret |
 | Nonce | Random 12 bytes per message |
 
-**Wire format:** `[4-byte length][12-byte nonce][ciphertext][16-byte auth tag]`
+**Wire format:** `[4-byte length][12-byte nonce][ciphertext+16-byte auth tag]`
 
 ---
 
@@ -331,15 +332,16 @@ log show --predicate 'process == "OTPBridge"' --last 5m
 - [x] Menu bar app
 - [x] OTP history
 
-### Phase 2
-- [ ] Auto-reconnect handling
-- [ ] Auto-launch at login
+### Phase 2 ✅
+- [x] Auto-reconnect handling
+- [x] Auto-launch at login/boot
+- [x] Company/brand name detection for OTPs
+- [x] Bidirectional clipboard sync
+- [x] Unpair + clear history from menu bar
 - [ ] Multiple device support
-- [ ] Improved OTP detection patterns
 
 ### Phase 3
-- [ ] BLE for device discovery
-- [ ] Clipboard sync (bidirectional)
+- [ ] BLE for device discovery (auto-detect Mac IP without re-pairing)
 - [ ] Notification mirroring
 - [ ] Nearby lock (auto-lock Mac when phone moves away)
 
@@ -352,7 +354,7 @@ log show --predicate 'process == "OTPBridge"' --last 5m
 
 | Property | Implementation |
 |----------|---------------|
-| **Encryption** | ChaCha20-Poly1305 (AEAD) |
+| **Encryption** | AES-256-GCM (AEAD) |
 | **Key Exchange** | X25519 ECDH |
 | **Key Storage** | Android: encrypted SharedPreferences / macOS: Keychain |
 | **Transport** | Local TCP only (no internet) |
