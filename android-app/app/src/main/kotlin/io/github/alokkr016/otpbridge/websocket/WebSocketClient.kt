@@ -132,7 +132,11 @@ class WebSocketClient private constructor(private val context: Context) {
                                 }
                             }
                         } catch (e: Exception) {
-                            Log.e(TAG, "Failed to process encrypted message: ${e.message}")
+                            Log.e(TAG, "Decryption failed (${e.message}) — re-handshaking")
+                            // Mac may have restarted and regenerated its key pair; re-initiate handshake
+                            handshakeComplete = false
+                            sharedSecret = keyPairStore.getPairedDevice()?.sharedSecret
+                            sendHandshake()
                         }
                     } else {
                         val text = String(payload)
