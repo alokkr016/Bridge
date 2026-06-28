@@ -58,7 +58,13 @@ class BLEScanner(private val context: Context) {
         val settings = ScanSettings.Builder()
             .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
             .build()
-        leScanner.startScan(listOf(filter), settings, scanCallback)
+        try {
+            leScanner.startScan(listOf(filter), settings, scanCallback)
+        } catch (e: SecurityException) {
+            Log.w(TAG, "BLE scan permission denied: ${e.message}")
+            scanning = false
+            return
+        }
         Log.d(TAG, "BLE scan started")
         handler.postDelayed({ stopScan() }, SCAN_PERIOD_MS)
     }

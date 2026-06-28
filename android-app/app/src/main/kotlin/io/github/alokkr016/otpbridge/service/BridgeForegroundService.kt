@@ -1,16 +1,20 @@
 package io.github.alokkr016.otpbridge.service
 
+import android.Manifest
 import android.app.Notification
 import android.app.PendingIntent
 import android.app.Service
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.wifi.WifiManager
+import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import io.github.alokkr016.otpbridge.MainActivity
 import io.github.alokkr016.otpbridge.R
 import io.github.alokkr016.otpbridge.notification.NotificationHelper
@@ -62,10 +66,10 @@ class BridgeForegroundService : Service() {
             webSocketClient.reconnect()
         }
 
-        // When TCP connection drops, scan BLE to find Mac's new IP
+        // When TCP connection drops, scan BLE to find Mac's new IP (requires runtime BT permission)
         webSocketClient.onDisconnected = {
             Log.d(TAG, "Connection lost — starting BLE scan for Mac IP")
-            bleScanner.startScan()
+            tryStartBLEScan()
         }
 
         webSocketClient.connect()
@@ -85,6 +89,25 @@ class BridgeForegroundService : Service() {
         cm.addPrimaryClipChangedListener(clipboardListener!!)
 
         return START_STICKY
+    }
+
+    private fun tryStartBLEScan() {
+        val hasPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED
+        } else {
+            true
+        }
+        if (!hasPermission) {
+            Log.w(TAG, "BLUETOOTH_SCAN permission not granted — skipping BLE scan")
+            return
+        }
+        try {
+            bleScanner.startScan()
+        } catch (e: SecurityException) {
+            Log.w(TAG, "BLE scan denied: ${e.message}")
+        } catch (e: Exception) {
+            Log.w(TAG, "BLE scan failed: ${e.message}")
+        }
     }
 
     override fun onDestroy() {
