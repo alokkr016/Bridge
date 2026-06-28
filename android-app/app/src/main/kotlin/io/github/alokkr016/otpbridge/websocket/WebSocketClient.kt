@@ -41,6 +41,7 @@ class WebSocketClient private constructor(private val context: Context) {
     val isHandshakeComplete: Boolean get() = handshakeComplete
     var isConnected = false
         private set
+    private var isConnecting = false
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var reconnectJob: Job? = null
     private var reconnectDelay = 1000L
@@ -52,10 +53,11 @@ class WebSocketClient private constructor(private val context: Context) {
     var onHandshakeComplete: (() -> Unit)? = null
 
     fun connect() {
-        if (isConnected) {
-            Log.d(TAG, "Already connected, skipping connect()")
+        if (isConnected || isConnecting) {
+            Log.d(TAG, "Already connected/connecting, skipping connect()")
             return
         }
+        isConnecting = true
         val pairedDevice = keyPairStore.getPairedDevice() ?: run {
             Log.w(TAG, "No paired device found")
             return
@@ -72,6 +74,7 @@ class WebSocketClient private constructor(private val context: Context) {
                 input = DataInputStream(s.getInputStream())
                 output = DataOutputStream(s.getOutputStream())
                 isConnected = true
+                isConnecting = false
                 reconnectDelay = 1000L
                 Log.d(TAG, "Connected")
 
@@ -84,6 +87,7 @@ class WebSocketClient private constructor(private val context: Context) {
             } catch (e: Exception) {
                 Log.e(TAG, "Connection failed: ${e.message}")
                 isConnected = false
+                isConnecting = false
                 withContext(Dispatchers.Main) {
                     onConnectionChanged?.invoke(false)
                 }
@@ -152,6 +156,18 @@ class WebSocketClient private constructor(private val context: Context) {
                         try {
                             val ack = json.decodeFromString(HandshakeAckMessage.serializer(), text)
                             if (ack.type == "handshake_ack") {
+                                // Re-derive shared secret from Mac's current public key every handshake.
+                                // The stored secret may be stale if the Mac re-paired or cleared prefs.
+                                try {
+                                    val macPubKeyBytes = java.util.Base64.getDecoder().decode(ack.publicKey)
+                                    val myKeyPair = cryptoManager.getOrCreateKeyPair()
+                                    val macPubKey = cryptoManager.parsePublicKey(macPubKeyBytes)
+                                    val freshSecret = cryptoManager.deriveSharedSecret(myKeyPair.private, macPubKey)
+                                    sharedSecret = freshSecret
+                                    Log.d(TAG, "Shared secret re-derived from ack public key")
+                                } catch (e: Exception) {
+                                    Log.e(TAG, "Failed to re-derive shared secret: ${e.message}")
+                                }
                                 Log.d(TAG, "Handshake acknowledged, switching to encrypted mode")
                                 handshakeComplete = true
                                 withContext(Dispatchers.Main) { onHandshakeComplete?.invoke() }
@@ -245,6 +261,7 @@ class WebSocketClient private constructor(private val context: Context) {
 
     private fun handleDisconnect() {
         isConnected = false
+        isConnecting = false
         handshakeComplete = false
         sharedSecret = null
         try {

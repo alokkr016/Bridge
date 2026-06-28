@@ -8,6 +8,8 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.provider.Settings
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -27,33 +29,46 @@ class MainActivity : ComponentActivity() {
 
     companion object {
         private const val TAG = "MainActivity"
+        private const val POLL_INTERVAL_MS = 500L
     }
 
     private val webSocketClient by lazy { WebSocketClient.getInstance(this) }
     private var clipboardManager: ClipboardManager? = null
-    private var clipboardListener: ClipboardManager.OnPrimaryClipChangedListener? = null
     private var lastSentClip: String? = null
+    private var lastSeenClip: String? = null
+    private val handler = Handler(Looper.getMainLooper())
+    private var hasFocus = false
+
+    // Poll every 500ms while in foreground — Samsung doesn't reliably deliver
+    // OnPrimaryClipChangedListener callbacks to third-party apps.
+    private val pollRunnable = object : Runnable {
+        override fun run() {
+            if (hasFocus) {
+                checkAndSendClipboard()
+                handler.postDelayed(this, POLL_INTERVAL_MS)
+            }
+        }
+    }
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         val allGranted = permissions.values.all { it }
-        if (allGranted) {
-            startForegroundService()
-        }
+        if (allGranted) startForegroundService()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         checkNotificationListenerPermission()
         clipboardManager = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        webSocketClient.onClipboardReceived = { text ->
+            lastSentClip = text
+            lastSeenClip = text  // prevent echo-back
+        }
 
         setContent {
             OTPBridgeTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
+                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     MainScreen()
                 }
             }
@@ -63,99 +78,76 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         requestPermissions()
-        registerClipboardListener()
     }
 
     override fun onPause() {
         super.onPause()
-        unregisterClipboardListener()
+        stopPolling()
     }
 
-    // Android 10+ only allows clipboard reads when the app has window focus.
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
+        this.hasFocus = hasFocus
         if (hasFocus) {
-            registerClipboardListener()
-            // Sync immediately if already connected and handshake done
-            if (webSocketClient.isConnected && webSocketClient.isHandshakeComplete) {
-                syncCurrentClipboard()
-            }
+            startPolling()
         } else {
-            unregisterClipboardListener()
+            stopPolling()
         }
     }
 
-    private fun registerClipboardListener() {
-        val cm = clipboardManager ?: return
-        if (clipboardListener != null) return
-        webSocketClient.onClipboardReceived = { text -> lastSentClip = text }
-        // Send current clipboard once handshake is done (safe moment to read + send)
-        webSocketClient.onHandshakeComplete = { syncCurrentClipboard() }
-        clipboardListener = ClipboardManager.OnPrimaryClipChangedListener {
-            syncCurrentClipboard()
-        }
-        cm.addPrimaryClipChangedListener(clipboardListener!!)
-        Log.d(TAG, "Clipboard listener registered")
+    private fun startPolling() {
+        handler.removeCallbacks(pollRunnable)
+        handler.post(pollRunnable)
+        Log.d(TAG, "Clipboard polling started")
     }
 
-    private fun unregisterClipboardListener() {
-        clipboardListener?.let { clipboardManager?.removePrimaryClipChangedListener(it) }
-        clipboardListener = null
+    private fun stopPolling() {
+        hasFocus = false
+        handler.removeCallbacks(pollRunnable)
+        Log.d(TAG, "Clipboard polling stopped")
     }
 
-    private fun syncCurrentClipboard() {
+    private fun checkAndSendClipboard() {
         val text = try {
             clipboardManager?.primaryClip?.getItemAt(0)?.text?.toString()
         } catch (e: Exception) {
-            Log.w(TAG, "Could not read clipboard: ${e.message}")
             null
-        } ?: return
-        if (text.isEmpty() || text == lastSentClip) return
-        lastSentClip = null
+        }
+        if (text.isNullOrEmpty()) return
+        if (text == lastSeenClip) return  // unchanged or just received from Mac
+        lastSeenClip = text
+        lastSentClip = text
         webSocketClient.sendClipboard(text)
-        Log.d(TAG, "Clipboard synced to Mac")
+        Log.d(TAG, "Clipboard sent to Mac: ${text.take(40)}")
     }
 
     private fun checkNotificationListenerPermission() {
         val enabled = Settings.Secure.getString(
-            contentResolver,
-            "enabled_notification_listeners"
+            contentResolver, "enabled_notification_listeners"
         )?.contains(ComponentName(this, "io.github.alokkr016.otpbridge.notification.OTNotificationListenerService").flattenToString()) ?: false
-
-        if (!enabled) {
-            startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
-        }
+        if (!enabled) startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
     }
 
     private fun requestPermissions() {
         val permissions = mutableListOf<String>()
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED)
             permissions.add(Manifest.permission.CAMERA)
-        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED)
                 permissions.add(Manifest.permission.POST_NOTIFICATIONS)
-            }
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_SMS) != PackageManager.PERMISSION_GRANTED) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_SMS) != PackageManager.PERMISSION_GRANTED)
                 permissions.add(Manifest.permission.READ_SMS)
-            }
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECEIVE_SMS) != PackageManager.PERMISSION_GRANTED) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECEIVE_SMS) != PackageManager.PERMISSION_GRANTED)
                 permissions.add(Manifest.permission.RECEIVE_SMS)
-            }
         } else {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECEIVE_SMS) != PackageManager.PERMISSION_GRANTED) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECEIVE_SMS) != PackageManager.PERMISSION_GRANTED)
                 permissions.add(Manifest.permission.RECEIVE_SMS)
-            }
         }
-        if (permissions.isNotEmpty()) {
-            requestPermissionLauncher.launch(permissions.toTypedArray())
-        } else {
-            startForegroundService()
-        }
+        if (permissions.isNotEmpty()) requestPermissionLauncher.launch(permissions.toTypedArray())
+        else startForegroundService()
     }
 
     private fun startForegroundService() {
-        val intent = Intent(this, BridgeForegroundService::class.java)
-        startForegroundService(intent)
+        startForegroundService(Intent(this, BridgeForegroundService::class.java))
     }
 }
