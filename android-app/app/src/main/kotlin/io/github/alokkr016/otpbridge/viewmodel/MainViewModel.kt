@@ -22,6 +22,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val isConnected: StateFlow<Boolean> = MutableStateFlow(false)
     val recentOTPs: StateFlow<List<OTPEntity>> = otpDao.getRecentOTPs()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    val pairedDevice get() = pairingManager.getPairedDevice()
 
     init {
         webSocketClient.onConnectionChanged = { connected ->

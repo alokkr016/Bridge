@@ -51,5 +51,6 @@ class ClipboardManager {
         pasteboard.setString(text, forType: .string)
         lastSentString = text
         lastChangeCount = pasteboard.changeCount
+        NotificationManager.shared.showClipboardNotification(preview: text)
     }
 }

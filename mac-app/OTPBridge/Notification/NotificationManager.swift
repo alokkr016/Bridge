@@ -20,15 +20,20 @@ class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
 
     func showOTPNotification(sender: String, otp: String) {
         let content = UNMutableNotificationContent()
-        content.title = "OTP Received"
-        content.body = "From \(sender): \(otp)\nCopied to clipboard"
+        content.title = "OTP from \(sender)"
+        content.body = "\(otp) — copied to clipboard"
         content.sound = .default
+        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
+        UNUserNotificationCenter.current().add(request)
+    }
 
-        let request = UNNotificationRequest(
-            identifier: UUID().uuidString,
-            content: content,
-            trigger: nil
-        )
+    func showClipboardNotification(preview: String) {
+        let content = UNMutableNotificationContent()
+        content.title = "Clipboard from iPhone"
+        let short = preview.count > 40 ? String(preview.prefix(40)) + "…" : preview
+        content.body = short
+        content.sound = .default
+        let request = UNNotificationRequest(identifier: "clipboard-\(UUID().uuidString)", content: content, trigger: nil)
         UNUserNotificationCenter.current().add(request)
     }
 

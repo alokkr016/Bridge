@@ -33,6 +33,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             WebSocketServer.shared.restoreSharedSecret()
         }
         WebSocketServer.shared.start()
+        BLEAdvertiser.shared.start()
     }
 
     /// Register the app to launch automatically at login (macOS 13+).

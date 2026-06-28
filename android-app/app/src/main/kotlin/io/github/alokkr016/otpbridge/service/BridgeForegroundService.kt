@@ -14,6 +14,7 @@ import androidx.core.app.NotificationCompat
 import io.github.alokkr016.otpbridge.MainActivity
 import io.github.alokkr016.otpbridge.R
 import io.github.alokkr016.otpbridge.notification.NotificationHelper
+import io.github.alokkr016.otpbridge.pairing.BLEScanner
 import io.github.alokkr016.otpbridge.websocket.WebSocketClient
 
 class BridgeForegroundService : Service() {
@@ -25,6 +26,7 @@ class BridgeForegroundService : Service() {
     }
 
     private val webSocketClient by lazy { WebSocketClient.getInstance(this) }
+    private val bleScanner by lazy { BLEScanner(this) }
     private var wakeLock: PowerManager.WakeLock? = null
     private var wifiLock: WifiManager.WifiLock? = null
     private var clipboardListener: ClipboardManager.OnPrimaryClipChangedListener? = null
@@ -54,6 +56,18 @@ class BridgeForegroundService : Service() {
             acquire()
         }
 
+        // When BLE discovers a new Mac IP, update stored IP and reconnect
+        bleScanner.onIPDiscovered = { newIP ->
+            Log.d(TAG, "BLE discovered new Mac IP: $newIP — reconnecting")
+            webSocketClient.reconnect()
+        }
+
+        // When TCP connection drops, scan BLE to find Mac's new IP
+        webSocketClient.onDisconnected = {
+            Log.d(TAG, "Connection lost — starting BLE scan for Mac IP")
+            bleScanner.startScan()
+        }
+
         webSocketClient.connect()
 
         // Track clipboard text received from Mac so we don't echo it back
@@ -77,6 +91,7 @@ class BridgeForegroundService : Service() {
         clipboardListener?.let {
             (getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager).removePrimaryClipChangedListener(it)
         }
+        bleScanner.stopScan()
         wakeLock?.release()
         wifiLock?.release()
         webSocketClient.disconnect()

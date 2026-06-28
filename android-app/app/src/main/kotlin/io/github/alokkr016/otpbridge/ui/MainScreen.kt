@@ -6,9 +6,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.LinkOff
 import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.LinkOff
 import androidx.compose.material.icons.filled.QrCodeScanner
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -27,6 +28,7 @@ fun MainScreen(viewModel: MainViewModel = viewModel()) {
     val isConnected by viewModel.isConnected.collectAsState()
     val recentOTPs by viewModel.recentOTPs.collectAsState()
     var showPairing by remember { mutableStateOf(false) }
+    var showSettings by remember { mutableStateOf(false) }
 
     if (showPairing) {
         PairingScreen(
@@ -35,6 +37,14 @@ fun MainScreen(viewModel: MainViewModel = viewModel()) {
                 showPairing = false
             },
             onDismiss = { showPairing = false }
+        )
+        return
+    }
+
+    if (showSettings) {
+        SettingsScreen(
+            pairedDevice = viewModel.pairedDevice,
+            onBack = { showSettings = false }
         )
         return
     }
@@ -53,6 +63,11 @@ fun MainScreen(viewModel: MainViewModel = viewModel()) {
                         )
                         Spacer(modifier = Modifier.width(10.dp))
                         Text("OTP Bridge")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { showSettings = true }) {
+                        Icon(Icons.Default.Settings, contentDescription = "Settings")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -124,14 +139,38 @@ fun MainScreen(viewModel: MainViewModel = viewModel()) {
                     Text("Reconnect")
                 }
                 Spacer(modifier = Modifier.height(8.dp))
+
+                var showUnpairDialog by remember { mutableStateOf(false) }
                 OutlinedButton(
-                    onClick = { viewModel.clearPairing() },
+                    onClick = { showUnpairDialog = true },
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.outlinedButtonColors(
                         contentColor = MaterialTheme.colorScheme.error
                     )
                 ) {
                     Text("Unpair")
+                }
+                if (showUnpairDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showUnpairDialog = false },
+                        title = { Text("Unpair device?") },
+                        text = { Text("This will disconnect from your Mac and delete the pairing. You'll need to scan the QR code again to reconnect.") },
+                        confirmButton = {
+                            TextButton(
+                                onClick = {
+                                    showUnpairDialog = false
+                                    viewModel.clearPairing()
+                                }
+                            ) {
+                                Text("Unpair", color = MaterialTheme.colorScheme.error)
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showUnpairDialog = false }) {
+                                Text("Cancel")
+                            }
+                        }
+                    )
                 }
             }
 

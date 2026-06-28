@@ -19,6 +19,7 @@
 		AA000013 /* OTPRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000113; };
 		AA000014 /* StorageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000114; };
 		AA000016 /* PairingWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000116; };
+		AA000018 /* BLEAdvertiser.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000118; };
 		AA000017 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA000117; };
 		AA000020 /* CryptoManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000120; };
 		AA000021 /* OTPExtractorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000121; };
@@ -37,6 +38,7 @@
 		AA000113 /* OTPRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OTPRecord.swift; sourceTree = "<group>"; };
 		AA000114 /* StorageManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageManager.swift; sourceTree = "<group>"; };
 		AA000116 /* PairingWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairingWindow.swift; sourceTree = "<group>"; };
+		AA000118 /* BLEAdvertiser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEAdvertiser.swift; sourceTree = "<group>"; };
 		AA000117 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		AA000120 /* CryptoManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CryptoManagerTests.swift; sourceTree = "<group>"; };
 		AA000121 /* OTPExtractorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OTPExtractorTests.swift; sourceTree = "<group>"; };
@@ -118,6 +120,7 @@
 			children = (
 				AA000108 /* PairingManager.swift */,
 				AA000109 /* QRCodeGenerator.swift */,
+				AA000118 /* BLEAdvertiser.swift */,
 			);
 			path = Pairing;
 			sourceTree = "<group>";
@@ -266,6 +269,7 @@
 				AA000007 /* KeyPairStore.swift in Sources */,
 				AA000008 /* PairingManager.swift in Sources */,
 				AA000009 /* QRCodeGenerator.swift in Sources */,
+				AA000018 /* BLEAdvertiser.swift in Sources */,
 				AA000010 /* WebSocketServer.swift in Sources */,
 				AA000011 /* ClipboardManager.swift in Sources */,
 				AA000012 /* NotificationManager.swift in Sources */,

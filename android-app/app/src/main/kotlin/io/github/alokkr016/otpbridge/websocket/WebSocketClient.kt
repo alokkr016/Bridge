@@ -46,6 +46,7 @@ class WebSocketClient private constructor(private val context: Context) {
 
     var onConnectionChanged: ((Boolean) -> Unit)? = null
     var onClipboardReceived: ((String) -> Unit)? = null
+    var onDisconnected: (() -> Unit)? = null
 
     fun connect() {
         val pairedDevice = keyPairStore.getPairedDevice() ?: run {
@@ -238,8 +239,19 @@ class WebSocketClient private constructor(private val context: Context) {
         output = null
         scope.launch(Dispatchers.Main) {
             onConnectionChanged?.invoke(false)
+            onDisconnected?.invoke()
         }
         scheduleReconnect()
+    }
+
+    fun reconnect() {
+        reconnectJob?.cancel()
+        readJob?.cancel()
+        try { socket?.close() } catch (_: Exception) {}
+        socket = null; input = null; output = null
+        isConnected = false; handshakeComplete = false; sharedSecret = null
+        reconnectDelay = 1000L
+        connect()
     }
 
     private fun scheduleReconnect() {

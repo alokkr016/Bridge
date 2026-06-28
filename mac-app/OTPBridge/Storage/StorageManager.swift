@@ -24,10 +24,24 @@ class StorageManager {
         }
     }
 
+    private let historyLimit = 50
+
     func saveOTP(sender: String, otp: String, company: String? = nil) {
         guard let context = modelContext else { return }
         let record = OTPRecord(sender: sender, otp: otp, company: company)
         context.insert(record)
+        try? context.save()
+        trimHistory(context: context)
+    }
+
+    private func trimHistory(context: ModelContext) {
+        var descriptor = FetchDescriptor<OTPRecord>(
+            sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
+        )
+        guard let all = try? context.fetch(descriptor), all.count > historyLimit else { return }
+        for record in all.dropFirst(historyLimit) {
+            context.delete(record)
+        }
         try? context.save()
     }
 
