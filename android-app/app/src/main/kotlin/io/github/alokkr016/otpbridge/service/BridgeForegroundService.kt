@@ -7,12 +7,14 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.pm.ServiceInfo
 import android.net.wifi.WifiManager
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
 import io.github.alokkr016.otpbridge.MainActivity
 import io.github.alokkr016.otpbridge.R
@@ -42,7 +44,7 @@ class BridgeForegroundService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         try {
-            startForeground(NOTIFICATION_ID, createNotification())
+            startForegroundWithBestType()
         } catch (e: Exception) {
             Log.w(TAG, "startForeground failed: ${e.message} — running without foreground")
         }
@@ -99,6 +101,27 @@ class BridgeForegroundService : Service() {
         wifiLock?.release()
         webSocketClient.disconnect()
         super.onDestroy()
+    }
+
+    private fun startForegroundWithBestType() {
+        val notification = createNotification()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            // Android 14+: use connectedDevice if BLUETOOTH_CONNECT is granted (no 6h limit),
+            // else fall back to dataSync. connectedDevice is designed for maintaining a
+            // persistent connection to a paired device — exactly what we're doing.
+            val hasBtConnect = ContextCompat.checkSelfPermission(
+                this, Manifest.permission.BLUETOOTH_CONNECT
+            ) == PackageManager.PERMISSION_GRANTED
+            val serviceType = if (hasBtConnect) {
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE
+            } else {
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
+            }
+            Log.d(TAG, "startForeground type=${if (hasBtConnect) "connectedDevice" else "dataSync (bt not granted)"}")
+            ServiceCompat.startForeground(this, NOTIFICATION_ID, notification, serviceType)
+        } else {
+            startForeground(NOTIFICATION_ID, notification)
+        }
     }
 
     private fun createNotification(): Notification {

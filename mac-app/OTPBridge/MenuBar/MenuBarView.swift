@@ -17,6 +17,7 @@ struct MenuBarView: View {
     @State private var serverConnected = WebSocketServer.shared.isConnected
     @State private var copiedOTP: String?
     @State private var hoveredID: UUID?
+    @State private var chimeEnabled = SoundManager.shared.isEnabled
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -236,6 +237,7 @@ struct MenuBarView: View {
             footerButton(title: "Connection Dashboard", icon: "network") {
                 NotificationCenter.default.post(name: openDashboardNotification, object: nil)
             }
+            chimeToggleRow
             footerButton(title: "Pair New Device…", icon: "qrcode") {
                 NotificationCenter.default.post(name: openPairingNotification, object: nil)
             }
@@ -260,6 +262,34 @@ struct MenuBarView: View {
             .keyboardShortcut("q", modifiers: .command)
         }
         .padding(.vertical, 5)
+    }
+
+    private var chimeToggleRow: some View {
+        Button(action: {
+            chimeEnabled.toggle()
+            SoundManager.shared.isEnabled = chimeEnabled
+            if chimeEnabled { SoundManager.shared.play() }
+        }) {
+            HStack(spacing: 9) {
+                Image(systemName: chimeEnabled ? "speaker.wave.2.fill" : "speaker.slash.fill")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                    .frame(width: 15)
+                Text("Chime on OTP")
+                    .font(.system(size: 12))
+                    .foregroundStyle(.primary)
+                Spacer()
+                Text(chimeEnabled ? "On" : "Off")
+                    .font(.system(size: 11))
+                    .foregroundStyle(chimeEnabled ? Color.green : Color.secondary.opacity(0.6))
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .frame(maxWidth: .infinity)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(HoverRowStyle())
+        .padding(.horizontal, 8)
     }
 
     private func footerButton(title: String, icon: String, shortcut: String? = nil, destructive: Bool = false, action: @escaping () -> Void) -> some View {

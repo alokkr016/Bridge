@@ -49,6 +49,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 StorageManager.shared.saveOTP(sender: sender, otp: otp, company: company)
                 NotificationManager.shared.showOTPNotification(sender: company ?? sender, otp: otp)
                 ClipboardManager.shared.copyToClipboard(otp)
+                SoundManager.shared.play()
                 NotificationCenter.default.post(
                     name: otpReceivedNotification,
                     object: nil,

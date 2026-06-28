@@ -34,7 +34,15 @@
       "Bash(open \"/Users/alokkumar/Library/Developer/Xcode/DerivedData/OTPBridge-fgohbgmkjwxhumbqftbtqxjaycar/Build/Products/Debug/OTPBridge.app\")",
       "Bash(\"/Users/alokkumar/Library/Developer/Xcode/DerivedData/OTPBridge-fgohbgmkjwxhumbqftbtqxjaycar/Build/Products/Debug/OTPBridge.app/Contents/MacOS/OTPBridge\")",
       "Bash(kill 34676)",
-      "Bash(echo \"Mac PID: $!\")"
+      "Bash(echo \"Mac PID: $!\")",
+      "Bash(JAVA_HOME=/opt/homebrew/Cellar/openjdk@17/17.0.19/libexec/openjdk.jdk/Contents/Home ./gradlew :app:compileDebugKotlin)",
+      "Bash(JAVA_HOME=/opt/homebrew/Cellar/openjdk@17/17.0.19/libexec/openjdk.jdk/Contents/Home ./gradlew :app:assembleDebug)",
+      "Bash(adb -s RZCY90KSJHW shell dumpsys activity services io.github.alokkr016.otpbridge)",
+      "Bash(python3 -c \"print\\(hex\\(0x00000010\\), '=', 0x00000010, '== CONNECTED_DEVICE \\(16\\)'\\)\")",
+      "Bash(JAVA_HOME=/opt/homebrew/Cellar/openjdk@17/17.0.19/libexec/openjdk.jdk/Contents/Home ./gradlew :app:assembleRelease)",
+      "Bash(adb -s RZCY90KSJHW install -r /Users/alokkumar/Documents/Bridge/android-app/app/build/outputs/apk/release/app-release.apk)",
+      "Bash(xcodebuild -project OTPBridge.xcodeproj -scheme OTPBridge -configuration Release build)",
+      "Bash(grep -v \"^$\")"
     ]
   }
 }

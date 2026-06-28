@@ -6,21 +6,30 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.PowerManager
 import android.provider.Settings
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
 import io.github.alokkr016.otpbridge.service.BridgeForegroundService
+import io.github.alokkr016.otpbridge.service.ServiceWatchdogWorker
 import io.github.alokkr016.otpbridge.ui.MainScreen
 import io.github.alokkr016.otpbridge.ui.theme.OTPBridgeTheme
 import io.github.alokkr016.otpbridge.websocket.WebSocketClient
@@ -30,6 +39,7 @@ class MainActivity : ComponentActivity() {
     companion object {
         private const val TAG = "MainActivity"
         private const val POLL_INTERVAL_MS = 500L
+        private const val PREF_BATTERY_PROMPT_SHOWN = "battery_opt_prompt_shown"
     }
 
     private val webSocketClient by lazy { WebSocketClient.getInstance(this) }
@@ -38,6 +48,7 @@ class MainActivity : ComponentActivity() {
     private var lastSeenClip: String? = null
     private val handler = Handler(Looper.getMainLooper())
     private var hasFocus = false
+    private var showBatteryDialog by mutableStateOf(false)
 
     // Poll every 500ms while in foreground — Samsung doesn't reliably deliver
     // OnPrimaryClipChangedListener callbacks to third-party apps.
@@ -53,8 +64,9 @@ class MainActivity : ComponentActivity() {
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
-        val allGranted = permissions.values.all { it }
-        if (allGranted) startForegroundService()
+        // Start service as long as core permissions are satisfied, regardless of BT result.
+        // BLUETOOTH_CONNECT is used to upgrade the FGS type — not required to run.
+        startForegroundService()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -66,11 +78,37 @@ class MainActivity : ComponentActivity() {
             lastSeenClip = text  // prevent echo-back
         }
 
+        ServiceWatchdogWorker.schedule(this)
+
         setContent {
             OTPBridgeTheme {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     MainScreen()
                 }
+            }
+
+            if (showBatteryDialog) {
+                AlertDialog(
+                    onDismissRequest = { dismissBatteryDialog() },
+                    title = { Text("Keep OTP Bridge Running") },
+                    text = {
+                        Text(
+                            "Samsung's battery optimizer can stop the app after a few hours, " +
+                            "causing you to miss OTPs.\n\n" +
+                            "Go to Settings → Battery → Background usage limits → " +
+                            "Never sleeping apps → Add OTP Bridge."
+                        )
+                    },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            dismissBatteryDialog()
+                            openBatterySettings()
+                        }) { Text("Open Settings") }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { dismissBatteryDialog() }) { Text("Later") }
+                    }
+                )
             }
         }
     }
@@ -78,6 +116,7 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         requestPermissions()
+        maybeShowBatteryOptimizationDialog()
     }
 
     override fun onPause() {
@@ -132,6 +171,10 @@ class MainActivity : ComponentActivity() {
         val permissions = mutableListOf<String>()
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED)
             permissions.add(Manifest.permission.CAMERA)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED)
+                permissions.add(Manifest.permission.BLUETOOTH_CONNECT)
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED)
                 permissions.add(Manifest.permission.POST_NOTIFICATIONS)
@@ -149,5 +192,31 @@ class MainActivity : ComponentActivity() {
 
     private fun startForegroundService() {
         startForegroundService(Intent(this, BridgeForegroundService::class.java))
+    }
+
+    private fun maybeShowBatteryOptimizationDialog() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return
+        val prefs = getSharedPreferences("otp_bridge_prefs", Context.MODE_PRIVATE)
+        if (prefs.getBoolean(PREF_BATTERY_PROMPT_SHOWN, false)) return
+        val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
+        if (pm.isIgnoringBatteryOptimizations(packageName)) return
+        showBatteryDialog = true
+    }
+
+    private fun dismissBatteryDialog() {
+        showBatteryDialog = false
+        getSharedPreferences("otp_bridge_prefs", Context.MODE_PRIVATE)
+            .edit().putBoolean(PREF_BATTERY_PROMPT_SHOWN, true).apply()
+    }
+
+    private fun openBatterySettings() {
+        try {
+            val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                data = Uri.parse("package:$packageName")
+            }
+            startActivity(intent)
+        } catch (e: Exception) {
+            startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
+        }
     }
 }
