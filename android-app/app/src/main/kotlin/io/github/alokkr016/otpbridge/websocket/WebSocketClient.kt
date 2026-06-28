@@ -77,11 +77,6 @@ class WebSocketClient private constructor(private val context: Context) {
                 isConnecting = false
                 reconnectDelay = 1000L
                 Log.d(TAG, "Connected")
-
-                withContext(Dispatchers.Main) {
-                    onConnectionChanged?.invoke(true)
-                }
-
                 sendHandshake()
                 startReading()
             } catch (e: Exception) {
@@ -170,7 +165,10 @@ class WebSocketClient private constructor(private val context: Context) {
                                 }
                                 Log.d(TAG, "Handshake acknowledged, switching to encrypted mode")
                                 handshakeComplete = true
-                                withContext(Dispatchers.Main) { onHandshakeComplete?.invoke() }
+                                withContext(Dispatchers.Main) {
+                                    onConnectionChanged?.invoke(true)
+                                    onHandshakeComplete?.invoke()
+                                }
                             }
                         } catch (_: Exception) {}
                     }

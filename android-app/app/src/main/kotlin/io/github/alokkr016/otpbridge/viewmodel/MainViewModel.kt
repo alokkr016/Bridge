@@ -25,6 +25,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val pairedDevice get() = pairingManager.getPairedDevice()
 
     init {
+        // Sync current state immediately in case service connected before ViewModel was created
+        (isConnected as MutableStateFlow).value = webSocketClient.isHandshakeComplete
         webSocketClient.onConnectionChanged = { connected ->
             (isConnected as MutableStateFlow).value = connected
         }
