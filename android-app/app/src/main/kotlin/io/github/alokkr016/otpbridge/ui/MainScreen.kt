@@ -176,10 +176,42 @@ fun MainScreen(viewModel: MainViewModel = viewModel()) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            Text(
-                text = "Recent OTPs",
-                style = MaterialTheme.typography.titleMedium
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Recent OTPs",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.weight(1f)
+                )
+                if (recentOTPs.isNotEmpty()) {
+                    var showClearDialog by remember { mutableStateOf(false) }
+                    TextButton(onClick = { showClearDialog = true }) {
+                        Text("Clear", color = MaterialTheme.colorScheme.error)
+                    }
+                    if (showClearDialog) {
+                        AlertDialog(
+                            onDismissRequest = { showClearDialog = false },
+                            title = { Text("Clear history?") },
+                            text = { Text("All OTP history will be deleted.") },
+                            confirmButton = {
+                                TextButton(onClick = {
+                                    showClearDialog = false
+                                    viewModel.clearHistory()
+                                }) {
+                                    Text("Clear", color = MaterialTheme.colorScheme.error)
+                                }
+                            },
+                            dismissButton = {
+                                TextButton(onClick = { showClearDialog = false }) {
+                                    Text("Cancel")
+                                }
+                            }
+                        )
+                    }
+                }
+            }
             Spacer(modifier = Modifier.height(8.dp))
 
             if (recentOTPs.isEmpty()) {

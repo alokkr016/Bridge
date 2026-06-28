@@ -46,6 +46,7 @@ class WebSocketClient private constructor(private val context: Context) {
     private var reconnectJob: Job? = null
     private var reconnectDelay = 1000L
     private var readJob: Job? = null
+    private var pingJob: Job? = null
 
     var onConnectionChanged: ((Boolean) -> Unit)? = null
     var onClipboardReceived: ((String) -> Unit)? = null
@@ -69,6 +70,8 @@ class WebSocketClient private constructor(private val context: Context) {
             try {
                 Log.d(TAG, "Connecting to ${pairedDevice.ip}:${pairedDevice.port}")
                 val s = Socket()
+                s.keepAlive = true          // OS-level TCP keepalive
+                s.soTimeout = 30_000        // 30s read timeout — forces disconnect detection
                 s.connect(InetSocketAddress(pairedDevice.ip, pairedDevice.port), 5000)
                 socket = s
                 input = DataInputStream(s.getInputStream())
@@ -79,6 +82,7 @@ class WebSocketClient private constructor(private val context: Context) {
                 Log.d(TAG, "Connected")
                 sendHandshake()
                 startReading()
+                startPing()
             } catch (e: Exception) {
                 Log.e(TAG, "Connection failed: ${e.message}")
                 isConnected = false
@@ -185,6 +189,26 @@ class WebSocketClient private constructor(private val context: Context) {
         }
     }
 
+    private fun startPing() {
+        pingJob?.cancel()
+        pingJob = scope.launch {
+            while (isConnected && isActive) {
+                delay(15_000L)
+                if (!isConnected) break
+                try {
+                    // Send a raw 4-byte zero-length ping frame; Mac ignores zero-length frames
+                    val pingBytes = byteArrayOf(0, 0, 0, 0)
+                    output?.write(pingBytes)
+                    output?.flush()
+                } catch (e: Exception) {
+                    Log.e(TAG, "Ping failed — connection broken: ${e.message}")
+                    if (socket !== null) handleDisconnect()
+                    break
+                }
+            }
+        }
+    }
+
     private fun readInt(): Int? {
         return try {
             val bytes = ByteArray(4)
@@ -222,11 +246,26 @@ class WebSocketClient private constructor(private val context: Context) {
         }
     }
 
+    // Dedup key → timestamp of last send; prevents double-send when both SMSReceiver
+    // and NotificationListener fire for the same SMS within 10 seconds.
+    private val recentlySentOTPs = mutableMapOf<String, Long>()
+
     fun sendOTP(otpMessage: OTPMessage) {
         if (!isConnected || !handshakeComplete || sharedSecret == null) {
             Log.w(TAG, "Not ready to send OTP (connected=$isConnected, handshake=$handshakeComplete)")
             return
         }
+        val dedupKey = "${otpMessage.sender}:${otpMessage.otp}"
+        val now = System.currentTimeMillis()
+        val lastSent = recentlySentOTPs[dedupKey] ?: 0L
+        if (now - lastSent < 10_000L) {
+            Log.d(TAG, "Duplicate OTP suppressed: ${otpMessage.otp}")
+            return
+        }
+        recentlySentOTPs[dedupKey] = now
+        // Prune old entries to avoid memory leak
+        recentlySentOTPs.entries.removeIf { now - it.value > 60_000L }
+
         scope.launch {
             try {
                 val jsonBytes = json.encodeToString(otpMessage).toByteArray()
@@ -278,9 +317,10 @@ class WebSocketClient private constructor(private val context: Context) {
     fun reconnect() {
         reconnectJob?.cancel()
         readJob?.cancel()
+        pingJob?.cancel()
         try { socket?.close() } catch (_: Exception) {}
         socket = null; input = null; output = null
-        isConnected = false; handshakeComplete = false; sharedSecret = null
+        isConnected = false; isConnecting = false; handshakeComplete = false; sharedSecret = null
         reconnectDelay = 1000L
         connect()
     }
@@ -298,6 +338,7 @@ class WebSocketClient private constructor(private val context: Context) {
     fun disconnect() {
         reconnectJob?.cancel()
         readJob?.cancel()
+        pingJob?.cancel()
         scope.launch(Dispatchers.IO) {
             handleDisconnect()
         }

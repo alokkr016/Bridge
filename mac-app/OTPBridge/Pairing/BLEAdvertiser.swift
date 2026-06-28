@@ -1,5 +1,6 @@
 import Foundation
 import CoreBluetooth
+import Network
 
 /// Advertises the Mac's current IP over BLE so the Android app can find it
 /// without needing the user to re-pair when the IP changes.
@@ -15,16 +16,37 @@ class BLEAdvertiser: NSObject {
     private var ipCharacteristic: CBMutableCharacteristic?
     private var pendingStart = false
 
+    private var pathMonitor: NWPathMonitor?
+    private let monitorQueue = DispatchQueue(label: "io.github.alokkr016.otpbridge.ble.pathmonitor")
+    private var lastAdvertisedIP: String?
+
     private override init() {}
 
     func start() {
         guard manager == nil else { return }
         manager = CBPeripheralManager(delegate: self, queue: .global())
+        startPathMonitor()
     }
 
     func stop() {
         manager?.stopAdvertising()
         manager = nil
+        pathMonitor?.cancel()
+        pathMonitor = nil
+        lastAdvertisedIP = nil
+    }
+
+    private func startPathMonitor() {
+        let monitor = NWPathMonitor(requiredInterfaceType: .wifi)
+        monitor.pathUpdateHandler = { [weak self] path in
+            guard let self else { return }
+            let newIP = self.currentIP()
+            guard newIP != self.lastAdvertisedIP else { return }
+            NSLog("[BLEAdvertiser] Wi-Fi path changed, new IP: \(newIP ?? "none") (was: \(self.lastAdvertisedIP ?? "none"))")
+            self.startAdvertising()
+        }
+        monitor.start(queue: monitorQueue)
+        pathMonitor = monitor
     }
 
     private func startAdvertising() {
@@ -53,6 +75,7 @@ class BLEAdvertiser: NSObject {
             CBAdvertisementDataServiceUUIDsKey: [BLEAdvertiser.serviceUUID],
             CBAdvertisementDataLocalNameKey: "Bridge"
         ])
+        lastAdvertisedIP = ip
         NSLog("[BLEAdvertiser] Advertising on \(ip)")
     }
 

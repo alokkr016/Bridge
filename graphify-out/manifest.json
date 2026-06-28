@@ -1,0 +1,392 @@
+{
+  "/Users/alokkumar/Documents/Bridge/.claude/settings.json": {
+    "mtime": 1782635985.4082546,
+    "ast_hash": "460f9e326b987f50aca57d1bc1a3b15f",
+    "semantic_hash": "460f9e326b987f50aca57d1bc1a3b15f"
+  },
+  "/Users/alokkumar/Documents/Bridge/android-app/app/build.gradle.kts": {
+    "mtime": 1782238612.6473515,
+    "ast_hash": "d1de909c39aaf742206f3c39c8270f3f",
+    "semantic_hash": "d1de909c39aaf742206f3c39c8270f3f"
+  },
+  "/Users/alokkumar/Documents/Bridge/android-app/app/src/main/kotlin/io/github/alokkr016/otpbridge/MainActivity.kt": {
+    "mtime": 1782634351.1904154,
+    "ast_hash": "c5092dca2ea40d1a5e71f090e9bcf5ae",
+    "semantic_hash": "c5092dca2ea40d1a5e71f090e9bcf5ae"
+  },
+  "/Users/alokkumar/Documents/Bridge/android-app/app/src/main/kotlin/io/github/alokkr016/otpbridge/OTPBridgeApp.kt": {
+    "mtime": 1782251826.5827668,
+    "ast_hash": "bfc3b771bcc1fa2b509a548ca0e679c4",
+    "semantic_hash": "bfc3b771bcc1fa2b509a548ca0e679c4"
+  },
+  "/Users/alokkumar/Documents/Bridge/android-app/app/src/main/kotlin/io/github/alokkr016/otpbridge/crypto/CryptoManager.kt": {
+    "mtime": 1782249145.085083,
+    "ast_hash": "9a79c48bd0aecea880399396aad49664",
+    "semantic_hash": "9a79c48bd0aecea880399396aad49664"
+  },
+  "/Users/alokkumar/Documents/Bridge/android-app/app/src/main/kotlin/io/github/alokkr016/otpbridge/crypto/KeyPairStore.kt": {
+    "mtime": 1782237992.9716458,
+    "ast_hash": "d3b36870f8a926cc41fc733403927468",
+    "semantic_hash": "d3b36870f8a926cc41fc733403927468"
+  },
+  "/Users/alokkumar/Documents/Bridge/android-app/app/src/main/kotlin/io/github/alokkr016/otpbridge/database/OTPDao.kt": {
+    "mtime": 1782238037.025676,
+    "ast_hash": "29ea8adf0ea5e71bb4b367a2695740e4",
+    "semantic_hash": "29ea8adf0ea5e71bb4b367a2695740e4"
+  },
+  "/Users/alokkumar/Documents/Bridge/android-app/app/src/main/kotlin/io/github/alokkr016/otpbridge/database/OTPDatabase.kt": {
+    "mtime": 1782252548.1013787,
+    "ast_hash": "1794a8f5c8e53c8360dc9874a408119b",
+    "semantic_hash": "1794a8f5c8e53c8360dc9874a408119b"
+  },
+  "/Users/alokkumar/Documents/Bridge/android-app/app/src/main/kotlin/io/github/alokkr016/otpbridge/database/OTPEntity.kt": {
+    "mtime": 1782252538.0558872,
+    "ast_hash": "d55e7b610090a662866b5bc376a4c271",
+    "semantic_hash": "d55e7b610090a662866b5bc376a4c271"
+  },
+  "/Users/alokkumar/Documents/Bridge/android-app/app/src/main/kotlin/io/github/alokkr016/otpbridge/notification/NotificationHelper.kt": {
+    "mtime": 1782238009.4334896,
+    "ast_hash": "59431dffeb5b1988980b2d719da79880",
+    "semantic_hash": "59431dffeb5b1988980b2d719da79880"
+  },
+  "/Users/alokkumar/Documents/Bridge/android-app/app/src/main/kotlin/io/github/alokkr016/otpbridge/notification/OTNotificationListenerService.kt": {
+    "mtime": 1782244413.0606267,
+    "ast_hash": "c69ad051e953a15839376172e69687da",
+    "semantic_hash": "c69ad051e953a15839376172e69687da"
+  },
+  "/Users/alokkumar/Documents/Bridge/android-app/app/src/main/kotlin/io/github/alokkr016/otpbridge/notification/SMSReceiver.kt": {
+    "mtime": 1782247739.777148,
+    "ast_hash": "7caf3c53acb47880f036b888d30b59bc",
+    "semantic_hash": "7caf3c53acb47880f036b888d30b59bc"
+  },
+  "/Users/alokkumar/Documents/Bridge/android-app/app/src/main/kotlin/io/github/alokkr016/otpbridge/otp/CompanyResolver.kt": {
+    "mtime": 1782250179.150888,
+    "ast_hash": "084f20d7c471c5d5a98ac3ea63ce5516",
+    "semantic_hash": "084f20d7c471c5d5a98ac3ea63ce5516"
+  },
+  "/Users/alokkumar/Documents/Bridge/android-app/app/src/main/kotlin/io/github/alokkr016/otpbridge/otp/OTPExtractor.kt": {
+    "mtime": 1782250194.4760137,
+    "ast_hash": "c5d33ae2a8d9bb6bc10714b9ce46f84b",
+    "semantic_hash": "c5d33ae2a8d9bb6bc10714b9ce46f84b"
+  },
+  "/Users/alokkumar/Documents/Bridge/android-app/app/src/main/kotlin/io/github/alokkr016/otpbridge/otp/OTPMessage.kt": {
+    "mtime": 1782250185.3682787,
+    "ast_hash": "fb088170733e26f7e32d7dc02743782f",
+    "semantic_hash": "fb088170733e26f7e32d7dc02743782f"
+  },
+  "/Users/alokkumar/Documents/Bridge/android-app/app/src/main/kotlin/io/github/alokkr016/otpbridge/pairing/BLEScanner.kt": {
+    "mtime": 1782633162.168343,
+    "ast_hash": "a176a31fbd64f5cf8a3310f4099456be",
+    "semantic_hash": "a176a31fbd64f5cf8a3310f4099456be"
+  },
+  "/Users/alokkumar/Documents/Bridge/android-app/app/src/main/kotlin/io/github/alokkr016/otpbridge/pairing/PairingManager.kt": {
+    "mtime": 1782240605.302303,
+    "ast_hash": "11d122ca9a926e75e53312d6bbb9e002",
+    "semantic_hash": "11d122ca9a926e75e53312d6bbb9e002"
+  },
+  "/Users/alokkumar/Documents/Bridge/android-app/app/src/main/kotlin/io/github/alokkr016/otpbridge/service/BootReceiver.kt": {
+    "mtime": 1782252144.8093305,
+    "ast_hash": "ee3a9af2fa4533472bfb697ee466779c",
+    "semantic_hash": "ee3a9af2fa4533472bfb697ee466779c"
+  },
+  "/Users/alokkumar/Documents/Bridge/android-app/app/src/main/kotlin/io/github/alokkr016/otpbridge/service/BridgeForegroundService.kt": {
+    "mtime": 1782633572.3887992,
+    "ast_hash": "3f2a5fb36250ad0e2c1ce554b9fc47e0",
+    "semantic_hash": "3f2a5fb36250ad0e2c1ce554b9fc47e0"
+  },
+  "/Users/alokkumar/Documents/Bridge/android-app/app/src/main/kotlin/io/github/alokkr016/otpbridge/ui/MainScreen.kt": {
+    "mtime": 1782632488.041163,
+    "ast_hash": "7afb489f39b46c890dcf25a9e10f9883",
+    "semantic_hash": "7afb489f39b46c890dcf25a9e10f9883"
+  },
+  "/Users/alokkumar/Documents/Bridge/android-app/app/src/main/kotlin/io/github/alokkr016/otpbridge/ui/PairingScreen.kt": {
+    "mtime": 1782241240.8299992,
+    "ast_hash": "e4e4d77dbeb3610bd634e15e7a1f8542",
+    "semantic_hash": "e4e4d77dbeb3610bd634e15e7a1f8542"
+  },
+  "/Users/alokkumar/Documents/Bridge/android-app/app/src/main/kotlin/io/github/alokkr016/otpbridge/ui/SettingsScreen.kt": {
+    "mtime": 1782632898.4121726,
+    "ast_hash": "82fe0fa16f68109ebc793364835cda4d",
+    "semantic_hash": "82fe0fa16f68109ebc793364835cda4d"
+  },
+  "/Users/alokkumar/Documents/Bridge/android-app/app/src/main/kotlin/io/github/alokkr016/otpbridge/ui/theme/Color.kt": {
+    "mtime": 1782238090.364254,
+    "ast_hash": "e1f337fa31c9d085ef358eebed072a9d",
+    "semantic_hash": "e1f337fa31c9d085ef358eebed072a9d"
+  },
+  "/Users/alokkumar/Documents/Bridge/android-app/app/src/main/kotlin/io/github/alokkr016/otpbridge/ui/theme/Theme.kt": {
+    "mtime": 1782238100.754703,
+    "ast_hash": "105c2f22ab6e948f3ffe30ea7d362823",
+    "semantic_hash": "105c2f22ab6e948f3ffe30ea7d362823"
+  },
+  "/Users/alokkumar/Documents/Bridge/android-app/app/src/main/kotlin/io/github/alokkr016/otpbridge/ui/theme/Type.kt": {
+    "mtime": 1782238096.8760164,
+    "ast_hash": "07e85104885f184f7aea66cdc15e700f",
+    "semantic_hash": "07e85104885f184f7aea66cdc15e700f"
+  },
+  "/Users/alokkumar/Documents/Bridge/android-app/app/src/main/kotlin/io/github/alokkr016/otpbridge/viewmodel/MainViewModel.kt": {
+    "mtime": 1782635357.6634386,
+    "ast_hash": "a38a11dccb495c68faa674ae1857330b",
+    "semantic_hash": "a38a11dccb495c68faa674ae1857330b"
+  },
+  "/Users/alokkumar/Documents/Bridge/android-app/app/src/main/kotlin/io/github/alokkr016/otpbridge/websocket/WebSocketClient.kt": {
+    "mtime": 1782635897.8957233,
+    "ast_hash": "7ccb7d2897c1393d606d55c461beeeb5",
+    "semantic_hash": "7ccb7d2897c1393d606d55c461beeeb5"
+  },
+  "/Users/alokkumar/Documents/Bridge/android-app/build.gradle.kts": {
+    "mtime": 1782238605.6218388,
+    "ast_hash": "2d35ed4cba6cebf3cc58e4eef1726dcf",
+    "semantic_hash": "2d35ed4cba6cebf3cc58e4eef1726dcf"
+  },
+  "/Users/alokkumar/Documents/Bridge/android-app/gradlew": {
+    "mtime": 1782238467.361509,
+    "ast_hash": "45bf2667b1fbec0e07e42808dc662b6b",
+    "semantic_hash": "45bf2667b1fbec0e07e42808dc662b6b"
+  },
+  "/Users/alokkumar/Documents/Bridge/android-app/settings.gradle.kts": {
+    "mtime": 1782237920.6525211,
+    "ast_hash": "269f27308ea17d903100df8168b292ea",
+    "semantic_hash": "269f27308ea17d903100df8168b292ea"
+  },
+  "/Users/alokkumar/Documents/Bridge/mac-app/OTPBridge/Assets.xcassets/AccentColor.colorset/Contents.json": {
+    "mtime": 1782238369.0957954,
+    "ast_hash": "55019f7265dde0a78318b0807f98e847",
+    "semantic_hash": "55019f7265dde0a78318b0807f98e847"
+  },
+  "/Users/alokkumar/Documents/Bridge/mac-app/OTPBridge/Assets.xcassets/AppIcon.appiconset/Contents.json": {
+    "mtime": 1782250371.460898,
+    "ast_hash": "204abf9bd2d2689c998a20159db453f0",
+    "semantic_hash": "204abf9bd2d2689c998a20159db453f0"
+  },
+  "/Users/alokkumar/Documents/Bridge/mac-app/OTPBridge/Assets.xcassets/Contents.json": {
+    "mtime": 1782238374.112713,
+    "ast_hash": "9deb2ada1cc834bbebf8bbad9c8978a1",
+    "semantic_hash": "9deb2ada1cc834bbebf8bbad9c8978a1"
+  },
+  "/Users/alokkumar/Documents/Bridge/mac-app/OTPBridge/Assets.xcassets/Logo.imageset/Contents.json": {
+    "mtime": 1782250442.0110862,
+    "ast_hash": "c04f677800e575afcdac7f6d0c5f0f8e",
+    "semantic_hash": "c04f677800e575afcdac7f6d0c5f0f8e"
+  },
+  "/Users/alokkumar/Documents/Bridge/mac-app/OTPBridge/Clipboard/ClipboardManager.swift": {
+    "mtime": 1782632526.73952,
+    "ast_hash": "00651b51f9fca4fa145f8eb99e39825a",
+    "semantic_hash": "00651b51f9fca4fa145f8eb99e39825a"
+  },
+  "/Users/alokkumar/Documents/Bridge/mac-app/OTPBridge/Crypto/CryptoManager.swift": {
+    "mtime": 1782245667.1038935,
+    "ast_hash": "9c9ee147a737833dd4080fccec793f63",
+    "semantic_hash": "9c9ee147a737833dd4080fccec793f63"
+  },
+  "/Users/alokkumar/Documents/Bridge/mac-app/OTPBridge/Crypto/KeyPairStore.swift": {
+    "mtime": 1782240485.7432299,
+    "ast_hash": "26c862eaa01a930d0e290819a0ad4165",
+    "semantic_hash": "26c862eaa01a930d0e290819a0ad4165"
+  },
+  "/Users/alokkumar/Documents/Bridge/mac-app/OTPBridge/MenuBar/MenuBarView.swift": {
+    "mtime": 1782635795.0746546,
+    "ast_hash": "146731e59d6973a1406d788cdcab8005",
+    "semantic_hash": "146731e59d6973a1406d788cdcab8005"
+  },
+  "/Users/alokkumar/Documents/Bridge/mac-app/OTPBridge/Notification/NotificationManager.swift": {
+    "mtime": 1782632520.0051575,
+    "ast_hash": "957d03c6f59c5142be76dc101e74e2bb",
+    "semantic_hash": "957d03c6f59c5142be76dc101e74e2bb"
+  },
+  "/Users/alokkumar/Documents/Bridge/mac-app/OTPBridge/OTPBridgeApp.swift": {
+    "mtime": 1782635780.7180567,
+    "ast_hash": "c658fa7fd2faef4775664ab21aba5033",
+    "semantic_hash": "c658fa7fd2faef4775664ab21aba5033"
+  },
+  "/Users/alokkumar/Documents/Bridge/mac-app/OTPBridge/Pairing/BLEAdvertiser.swift": {
+    "mtime": 1782632559.4557176,
+    "ast_hash": "50c68a4e612c1ebce775c6635d10779d",
+    "semantic_hash": "50c68a4e612c1ebce775c6635d10779d"
+  },
+  "/Users/alokkumar/Documents/Bridge/mac-app/OTPBridge/Pairing/PairingManager.swift": {
+    "mtime": 1782241200.2236857,
+    "ast_hash": "eafb7aff5a7e1865a06f8648f23caea0",
+    "semantic_hash": "eafb7aff5a7e1865a06f8648f23caea0"
+  },
+  "/Users/alokkumar/Documents/Bridge/mac-app/OTPBridge/Pairing/QRCodeGenerator.swift": {
+    "mtime": 1782238133.9067264,
+    "ast_hash": "1032a555d70d524d71a6482ee1fbec5c",
+    "semantic_hash": "1032a555d70d524d71a6482ee1fbec5c"
+  },
+  "/Users/alokkumar/Documents/Bridge/mac-app/OTPBridge/Storage/OTPRecord.swift": {
+    "mtime": 1782250223.9183204,
+    "ast_hash": "d98017fa80bf13488ad8af9ed033c815",
+    "semantic_hash": "d98017fa80bf13488ad8af9ed033c815"
+  },
+  "/Users/alokkumar/Documents/Bridge/mac-app/OTPBridge/Storage/StorageManager.swift": {
+    "mtime": 1782632535.17553,
+    "ast_hash": "1347f72954d0f3b752ed9ce93bb3e505",
+    "semantic_hash": "1347f72954d0f3b752ed9ce93bb3e505"
+  },
+  "/Users/alokkumar/Documents/Bridge/mac-app/OTPBridge/UI/PairingWindow.swift": {
+    "mtime": 1782250464.4521918,
+    "ast_hash": "d7f23817971624df212af3db6caa0e13",
+    "semantic_hash": "d7f23817971624df212af3db6caa0e13"
+  },
+  "/Users/alokkumar/Documents/Bridge/mac-app/OTPBridge/WebSocketServer/WebSocketServer.swift": {
+    "mtime": 1782635809.9105275,
+    "ast_hash": "0bd2affd2505f894063f140e4a2f25e8",
+    "semantic_hash": "0bd2affd2505f894063f140e4a2f25e8"
+  },
+  "/Users/alokkumar/Documents/Bridge/mac-app/OTPBridgeTests/CryptoManagerTests.swift": {
+    "mtime": 1782238225.699505,
+    "ast_hash": "49b9eb73dc6df7ede89d733063e0a505",
+    "semantic_hash": "49b9eb73dc6df7ede89d733063e0a505"
+  },
+  "/Users/alokkumar/Documents/Bridge/mac-app/OTPBridgeTests/OTPExtractorTests.swift": {
+    "mtime": 1782238244.165001,
+    "ast_hash": "e98ba7a4da56e8a710dcb74a7f3c5295",
+    "semantic_hash": "e98ba7a4da56e8a710dcb74a7f3c5295"
+  },
+  "/Users/alokkumar/Documents/Bridge/CONTRIBUTING.md": {
+    "mtime": 1782243179.863142,
+    "ast_hash": "c3a0d8bee070d67c2d0d488d285e9ea7",
+    "semantic_hash": "c3a0d8bee070d67c2d0d488d285e9ea7"
+  },
+  "/Users/alokkumar/Documents/Bridge/ISSUES.md": {
+    "mtime": 1782250952.6842935,
+    "ast_hash": "8fe63a0b218a7dbfcc6fbbf2979809af",
+    "semantic_hash": "8fe63a0b218a7dbfcc6fbbf2979809af"
+  },
+  "/Users/alokkumar/Documents/Bridge/README.md": {
+    "mtime": 1782252726.3784459,
+    "ast_hash": "c7f30eec466e3c673257fd5704b59994",
+    "semantic_hash": "c7f30eec466e3c673257fd5704b59994"
+  },
+  "/Users/alokkumar/Documents/Bridge/docs/ARCHITECTURE.md": {
+    "mtime": 1782243208.9223123,
+    "ast_hash": "088fdeb7e4b0fb5f9eb44556acc683eb",
+    "semantic_hash": "088fdeb7e4b0fb5f9eb44556acc683eb"
+  },
+  "/Users/alokkumar/Documents/Bridge/android-app/app/src/main/res/drawable/logo.png": {
+    "mtime": 1782251835.3340292,
+    "ast_hash": "4bdf703fd0f788d57b1509eab7fea40f",
+    "semantic_hash": "4bdf703fd0f788d57b1509eab7fea40f"
+  },
+  "/Users/alokkumar/Documents/Bridge/android-app/app/src/main/res/mipmap-hdpi/ic_launcher.png": {
+    "mtime": 1782251441.9544444,
+    "ast_hash": "0c956fe117d3f15ae9194ae5b6a5db68",
+    "semantic_hash": "0c956fe117d3f15ae9194ae5b6a5db68"
+  },
+  "/Users/alokkumar/Documents/Bridge/android-app/app/src/main/res/mipmap-hdpi/ic_launcher_foreground.png": {
+    "mtime": 1782251926.4973838,
+    "ast_hash": "19bdd8bd612ff923ff8e7a6419648a1c",
+    "semantic_hash": "19bdd8bd612ff923ff8e7a6419648a1c"
+  },
+  "/Users/alokkumar/Documents/Bridge/android-app/app/src/main/res/mipmap-mdpi/ic_launcher.png": {
+    "mtime": 1782251441.90322,
+    "ast_hash": "17db667a5ebed257092dbd21b919a79b",
+    "semantic_hash": "17db667a5ebed257092dbd21b919a79b"
+  },
+  "/Users/alokkumar/Documents/Bridge/android-app/app/src/main/res/mipmap-mdpi/ic_launcher_foreground.png": {
+    "mtime": 1782251926.4941216,
+    "ast_hash": "eaabd2946937dc016c58906c84c59d49",
+    "semantic_hash": "eaabd2946937dc016c58906c84c59d49"
+  },
+  "/Users/alokkumar/Documents/Bridge/android-app/app/src/main/res/mipmap-xhdpi/ic_launcher.png": {
+    "mtime": 1782251442.0041943,
+    "ast_hash": "d9b6634f011df1d00ec841d991aef769",
+    "semantic_hash": "d9b6634f011df1d00ec841d991aef769"
+  },
+  "/Users/alokkumar/Documents/Bridge/android-app/app/src/main/res/mipmap-xhdpi/ic_launcher_foreground.png": {
+    "mtime": 1782251926.5016212,
+    "ast_hash": "d40a5a3da92c53f557c7de0529e6d515",
+    "semantic_hash": "d40a5a3da92c53f557c7de0529e6d515"
+  },
+  "/Users/alokkumar/Documents/Bridge/android-app/app/src/main/res/mipmap-xxhdpi/ic_launcher.png": {
+    "mtime": 1782251442.0536377,
+    "ast_hash": "3a8ee7cba47388a19f3e6df0fe0a3060",
+    "semantic_hash": "3a8ee7cba47388a19f3e6df0fe0a3060"
+  },
+  "/Users/alokkumar/Documents/Bridge/android-app/app/src/main/res/mipmap-xxhdpi/ic_launcher_foreground.png": {
+    "mtime": 1782251926.5084553,
+    "ast_hash": "a226fa166cb793c670fbb1b8b021a1b8",
+    "semantic_hash": "a226fa166cb793c670fbb1b8b021a1b8"
+  },
+  "/Users/alokkumar/Documents/Bridge/android-app/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png": {
+    "mtime": 1782251442.1038876,
+    "ast_hash": "4bdf703fd0f788d57b1509eab7fea40f",
+    "semantic_hash": "4bdf703fd0f788d57b1509eab7fea40f"
+  },
+  "/Users/alokkumar/Documents/Bridge/android-app/app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.png": {
+    "mtime": 1782251926.5199919,
+    "ast_hash": "9d2e96957cd925c242fe83bff6c4696b",
+    "semantic_hash": "9d2e96957cd925c242fe83bff6c4696b"
+  },
+  "/Users/alokkumar/Documents/Bridge/logo.png": {
+    "mtime": 1782250550.6733649,
+    "ast_hash": "be00398e8113ff2fffdfd51100c5fd5f",
+    "semantic_hash": "be00398e8113ff2fffdfd51100c5fd5f"
+  },
+  "/Users/alokkumar/Documents/Bridge/mac-app/OTPBridge/Assets.xcassets/AppIcon.appiconset/icon_128x128.png": {
+    "mtime": 1782251441.39562,
+    "ast_hash": "5f78f67b8f76ab28156b4aa201e68fc2",
+    "semantic_hash": "5f78f67b8f76ab28156b4aa201e68fc2"
+  },
+  "/Users/alokkumar/Documents/Bridge/mac-app/OTPBridge/Assets.xcassets/AppIcon.appiconset/icon_128x128@2x.png": {
+    "mtime": 1782251441.4466841,
+    "ast_hash": "9657687aa82ae2ccd6b2739f7790bb58",
+    "semantic_hash": "9657687aa82ae2ccd6b2739f7790bb58"
+  },
+  "/Users/alokkumar/Documents/Bridge/mac-app/OTPBridge/Assets.xcassets/AppIcon.appiconset/icon_16x16.png": {
+    "mtime": 1782251441.195204,
+    "ast_hash": "12a3bcf041d631d6cbce8737ee1a9cd4",
+    "semantic_hash": "12a3bcf041d631d6cbce8737ee1a9cd4"
+  },
+  "/Users/alokkumar/Documents/Bridge/mac-app/OTPBridge/Assets.xcassets/AppIcon.appiconset/icon_16x16@2x.png": {
+    "mtime": 1782251441.2465506,
+    "ast_hash": "06b98e73660440523eebda42c1476b97",
+    "semantic_hash": "06b98e73660440523eebda42c1476b97"
+  },
+  "/Users/alokkumar/Documents/Bridge/mac-app/OTPBridge/Assets.xcassets/AppIcon.appiconset/icon_256x256.png": {
+    "mtime": 1782251441.4960546,
+    "ast_hash": "9657687aa82ae2ccd6b2739f7790bb58",
+    "semantic_hash": "9657687aa82ae2ccd6b2739f7790bb58"
+  },
+  "/Users/alokkumar/Documents/Bridge/mac-app/OTPBridge/Assets.xcassets/AppIcon.appiconset/icon_256x256@2x.png": {
+    "mtime": 1782251441.5532382,
+    "ast_hash": "e5b2abfff823136986e76fc77e4f2136",
+    "semantic_hash": "e5b2abfff823136986e76fc77e4f2136"
+  },
+  "/Users/alokkumar/Documents/Bridge/mac-app/OTPBridge/Assets.xcassets/AppIcon.appiconset/icon_32x32.png": {
+    "mtime": 1782251441.2943697,
+    "ast_hash": "06b98e73660440523eebda42c1476b97",
+    "semantic_hash": "06b98e73660440523eebda42c1476b97"
+  },
+  "/Users/alokkumar/Documents/Bridge/mac-app/OTPBridge/Assets.xcassets/AppIcon.appiconset/icon_32x32@2x.png": {
+    "mtime": 1782251441.3458037,
+    "ast_hash": "430c27d2dec34096ae062008eac3ac7b",
+    "semantic_hash": "430c27d2dec34096ae062008eac3ac7b"
+  },
+  "/Users/alokkumar/Documents/Bridge/mac-app/OTPBridge/Assets.xcassets/AppIcon.appiconset/icon_512x512.png": {
+    "mtime": 1782251441.6117203,
+    "ast_hash": "e5b2abfff823136986e76fc77e4f2136",
+    "semantic_hash": "e5b2abfff823136986e76fc77e4f2136"
+  },
+  "/Users/alokkumar/Documents/Bridge/mac-app/OTPBridge/Assets.xcassets/AppIcon.appiconset/icon_512x512@2x.png": {
+    "mtime": 1782251441.6948786,
+    "ast_hash": "7f65dd741031afe8123895005f2eb155",
+    "semantic_hash": "7f65dd741031afe8123895005f2eb155"
+  },
+  "/Users/alokkumar/Documents/Bridge/mac-app/OTPBridge/Assets.xcassets/Logo.imageset/logo_128.png": {
+    "mtime": 1782251441.7480867,
+    "ast_hash": "5f78f67b8f76ab28156b4aa201e68fc2",
+    "semantic_hash": "5f78f67b8f76ab28156b4aa201e68fc2"
+  },
+  "/Users/alokkumar/Documents/Bridge/mac-app/OTPBridge/Assets.xcassets/Logo.imageset/logo_256.png": {
+    "mtime": 1782251441.7967997,
+    "ast_hash": "9657687aa82ae2ccd6b2739f7790bb58",
+    "semantic_hash": "9657687aa82ae2ccd6b2739f7790bb58"
+  },
+  "/Users/alokkumar/Documents/Bridge/mac-app/OTPBridge/Assets.xcassets/Logo.imageset/logo_512.png": {
+    "mtime": 1782251441.85417,
+    "ast_hash": "e5b2abfff823136986e76fc77e4f2136",
+    "semantic_hash": "e5b2abfff823136986e76fc77e4f2136"
+  }
+}

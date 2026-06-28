@@ -43,8 +43,19 @@ struct MenuBarView: View {
         .onAppear {
             loadRecentOTPs()
             setupCallbacks()
-            Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
-                serverConnected = WebSocketServer.shared.isConnected
+        }
+        .onReceive(NotificationCenter.default.publisher(for: otpReceivedNotification)) { note in
+            if let otp = note.userInfo?["otp"] as? String {
+                withAnimation { copiedOTP = otp }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                    if copiedOTP == otp { withAnimation { copiedOTP = nil } }
+                }
+                loadRecentOTPs()
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: connectionChangedNotification)) { note in
+            if let connected = note.userInfo?["connected"] as? Bool {
+                serverConnected = connected
             }
         }
     }
@@ -222,6 +233,9 @@ struct MenuBarView: View {
 
     private var footer: some View {
         VStack(spacing: 0) {
+            footerButton(title: "Connection Dashboard", icon: "network") {
+                NotificationCenter.default.post(name: openDashboardNotification, object: nil)
+            }
             footerButton(title: "Pair New Device…", icon: "qrcode") {
                 NotificationCenter.default.post(name: openPairingNotification, object: nil)
             }
@@ -307,23 +321,8 @@ struct MenuBarView: View {
     }
 
     private func setupCallbacks() {
-        WebSocketServer.shared.onOTPReceived = { sender, otp, company, _ in
-            DispatchQueue.main.async {
-                ClipboardManager.shared.copyToClipboard(otp)
-                NotificationManager.shared.showOTPNotification(sender: company ?? sender, otp: otp)
-                StorageManager.shared.saveOTP(sender: sender, otp: otp, company: company)
-                withAnimation { copiedOTP = otp }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                    if copiedOTP == otp { withAnimation { copiedOTP = nil } }
-                }
-                loadRecentOTPs()
-            }
-        }
-        WebSocketServer.shared.onConnectionChanged = { connected in
-            DispatchQueue.main.async {
-                serverConnected = connected
-            }
-        }
+        // Connection status initial sync — callbacks are wired in AppDelegate
+        serverConnected = WebSocketServer.shared.isConnected
     }
 }
 

@@ -19,6 +19,7 @@
 		AA000013 /* OTPRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000113; };
 		AA000014 /* StorageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000114; };
 		AA000016 /* PairingWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000116; };
+		AA000019 /* ConnectionDashboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000119; };
 		AA000018 /* BLEAdvertiser.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000118; };
 		AA000017 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA000117; };
 		AA000020 /* CryptoManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000120; };
@@ -38,6 +39,7 @@
 		AA000113 /* OTPRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OTPRecord.swift; sourceTree = "<group>"; };
 		AA000114 /* StorageManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageManager.swift; sourceTree = "<group>"; };
 		AA000116 /* PairingWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairingWindow.swift; sourceTree = "<group>"; };
+		AA000119 /* ConnectionDashboard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionDashboard.swift; sourceTree = "<group>"; };
 		AA000118 /* BLEAdvertiser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEAdvertiser.swift; sourceTree = "<group>"; };
 		AA000117 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		AA000120 /* CryptoManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CryptoManagerTests.swift; sourceTree = "<group>"; };
@@ -170,6 +172,7 @@
 			isa = PBXGroup;
 			children = (
 				AA000116 /* PairingWindow.swift */,
+				AA000119 /* ConnectionDashboard.swift */,
 			);
 			path = UI;
 			sourceTree = "<group>";
@@ -276,6 +279,7 @@
 				AA000013 /* OTPRecord.swift in Sources */,
 				AA000014 /* StorageManager.swift in Sources */,
 				AA000016 /* PairingWindow.swift in Sources */,
+				AA000019 /* ConnectionDashboard.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -101,8 +101,10 @@ class WebSocketServer {
                 return
             }
             let length = Int(ld[0]) << 24 | Int(ld[1]) << 16 | Int(ld[2]) << 8 | Int(ld[3])
-            guard length > 0, length < 1_000_000 else {
-                NSLog("[OTPBridge] Invalid length, disconnecting")
+            // length == 0 is a keepalive ping — just loop back and read the next frame
+            if length == 0 { self.readLoop(connection: connection); return }
+            guard length < 1_000_000 else {
+                NSLog("[OTPBridge] Invalid length \(length), disconnecting")
                 self.isConnected = false
                 self.connection = nil
                 return
@@ -155,7 +157,9 @@ class WebSocketServer {
                     let sender = json?["sender"] as? String ?? "Unknown"
                     let otp = json?["otp"] as? String ?? ""
                     let company = json?["company"] as? String
-                    let timestamp = json?["timestamp"] as? TimeInterval ?? Date().timeIntervalSince1970
+                    // Android sends millis; convert to seconds for TimeInterval
+                    let rawTs = json?["timestamp"] as? TimeInterval ?? (Date().timeIntervalSince1970 * 1000)
+                    let timestamp = rawTs > 1_000_000_000_000 ? rawTs / 1000.0 : rawTs
                     NSLog("[OTPBridge] OTP received: \(otp) from \(company ?? sender)")
                     DispatchQueue.main.async {
                         self.onOTPReceived?(sender, otp, company, timestamp)

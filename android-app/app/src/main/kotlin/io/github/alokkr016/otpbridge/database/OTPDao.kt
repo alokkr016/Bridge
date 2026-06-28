@@ -16,4 +16,7 @@ interface OTPDao {
 
     @Query("DELETE FROM otp_messages WHERE timestamp < :before")
     suspend fun deleteOlderThan(before: Long)
+
+    @Query("DELETE FROM otp_messages")
+    suspend fun deleteAll()
 }

@@ -66,4 +66,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         pairingManager.clearPairing()
         (isPaired as MutableStateFlow).value = false
     }
+
+    fun clearHistory() {
+        viewModelScope.launch {
+            otpDao.deleteAll()
+        }
+    }
 }
