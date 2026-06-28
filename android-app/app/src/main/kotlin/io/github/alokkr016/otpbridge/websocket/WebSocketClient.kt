@@ -38,7 +38,9 @@ class WebSocketClient private constructor(private val context: Context) {
     private var output: DataOutputStream? = null
     private var sharedSecret: ByteArray? = null
     private var handshakeComplete = false
-    private var isConnected = false
+    val isHandshakeComplete: Boolean get() = handshakeComplete
+    var isConnected = false
+        private set
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var reconnectJob: Job? = null
     private var reconnectDelay = 1000L
@@ -47,8 +49,13 @@ class WebSocketClient private constructor(private val context: Context) {
     var onConnectionChanged: ((Boolean) -> Unit)? = null
     var onClipboardReceived: ((String) -> Unit)? = null
     var onDisconnected: (() -> Unit)? = null
+    var onHandshakeComplete: (() -> Unit)? = null
 
     fun connect() {
+        if (isConnected) {
+            Log.d(TAG, "Already connected, skipping connect()")
+            return
+        }
         val pairedDevice = keyPairStore.getPairedDevice() ?: run {
             Log.w(TAG, "No paired device found")
             return
@@ -102,6 +109,7 @@ class WebSocketClient private constructor(private val context: Context) {
     }
 
     private fun startReading() {
+        val mySocket = socket  // capture at start; detect if we've been replaced
         readJob = scope.launch {
             try {
                 while (isConnected && isActive) {
@@ -146,6 +154,7 @@ class WebSocketClient private constructor(private val context: Context) {
                             if (ack.type == "handshake_ack") {
                                 Log.d(TAG, "Handshake acknowledged, switching to encrypted mode")
                                 handshakeComplete = true
+                                withContext(Dispatchers.Main) { onHandshakeComplete?.invoke() }
                             }
                         } catch (_: Exception) {}
                     }
@@ -153,8 +162,11 @@ class WebSocketClient private constructor(private val context: Context) {
             } catch (e: Exception) {
                 Log.e(TAG, "Read error: ${e.message}")
             }
-            if (isConnected) {
+            // Only handle disconnect if we are still the active socket (not already replaced by a reconnect)
+            if (socket === mySocket) {
                 handleDisconnect()
+            } else {
+                Log.d(TAG, "Old read loop exited, new connection already active — ignoring")
             }
         }
     }

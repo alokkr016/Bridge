@@ -72,13 +72,14 @@ class MainActivity : ComponentActivity() {
     }
 
     // Android 10+ only allows clipboard reads when the app has window focus.
-    // Register here so we can read clips the moment the user switches to us.
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
         if (hasFocus) {
             registerClipboardListener()
-            // Also sync the current clipboard immediately when focus is gained
-            syncCurrentClipboard()
+            // Sync immediately if already connected and handshake done
+            if (webSocketClient.isConnected && webSocketClient.isHandshakeComplete) {
+                syncCurrentClipboard()
+            }
         } else {
             unregisterClipboardListener()
         }
@@ -87,8 +88,9 @@ class MainActivity : ComponentActivity() {
     private fun registerClipboardListener() {
         val cm = clipboardManager ?: return
         if (clipboardListener != null) return
-        // Also keep service informed of what Mac last sent so echo prevention works cross-process
         webSocketClient.onClipboardReceived = { text -> lastSentClip = text }
+        // Send current clipboard once handshake is done (safe moment to read + send)
+        webSocketClient.onHandshakeComplete = { syncCurrentClipboard() }
         clipboardListener = ClipboardManager.OnPrimaryClipChangedListener {
             syncCurrentClipboard()
         }
