@@ -15,10 +15,10 @@ object NotificationHelper {
     fun createChannel(context: Context) {
         val channel = NotificationChannel(
             CHANNEL_ID,
-            "OTP Bridge",
+            "Bridge",
             NotificationManager.IMPORTANCE_LOW
         ).apply {
-            description = "Shows OTP Bridge connection status"
+            description = "Shows Bridge connection status"
         }
         val manager = context.getSystemService(NotificationManager::class.java)
         manager.createNotificationChannel(channel)
@@ -28,7 +28,7 @@ object NotificationHelper {
         val manager = context.getSystemService(NotificationManager::class.java)
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
-            .setContentTitle("OTP Bridge")
+            .setContentTitle("Bridge")
             .setContentText(if (connected) "Connected to Mac" else "Disconnected")
             .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)

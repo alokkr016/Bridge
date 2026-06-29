@@ -132,7 +132,7 @@ class BridgeForegroundService : Service() {
         )
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
-            .setContentTitle("OTP Bridge")
+            .setContentTitle("Bridge")
             .setContentText("Running in background")
             .setContentIntent(pendingIntent)
             .setOngoing(true)

@@ -12,6 +12,7 @@ struct OTPItem: Identifiable {
 }
 
 struct MenuBarView: View {
+    @ObservedObject var updater = UpdaterManager.shared
     @State private var lastOTP: OTPItem?
     @State private var recentOTPs: [OTPItem] = []
     @State private var serverConnected = WebSocketServer.shared.isConnected
@@ -234,13 +235,36 @@ struct MenuBarView: View {
 
     private var footer: some View {
         VStack(spacing: 0) {
+            // Section 1: Dashboard & Sound
             footerButton(title: "Connection Dashboard", icon: "network") {
                 NotificationCenter.default.post(name: openDashboardNotification, object: nil)
             }
             chimeToggleRow
+            
+            Divider().padding(.horizontal, 8).padding(.vertical, 4)
+            
+            // Section 2: Connection & Updates
             footerButton(title: "Pair New Device…", icon: "qrcode") {
                 NotificationCenter.default.post(name: openPairingNotification, object: nil)
             }
+            
+            if updater.updateAvailable {
+                footerButton(title: updater.isDownloading ? "Downloading update..." : "Install Update (\(updater.latestVersion))", icon: "arrow.down.circle") {
+                    updater.downloadAndInstallUpdate()
+                }
+                .disabled(updater.isDownloading)
+            } else {
+                footerButton(title: updater.isChecking ? "Checking for updates..." : (updater.statusMessage.isEmpty ? "Check for Updates…" : updater.statusMessage), icon: "arrow.triangle.2.circlepath") {
+                    updater.checkForUpdates(manually: true)
+                }
+                .disabled(updater.isChecking)
+            }
+            
+            if PairingManager.shared.isPaired() || !recentOTPs.isEmpty {
+                Divider().padding(.horizontal, 8).padding(.vertical, 4)
+            }
+            
+            // Section 3: Destructive actions
             if PairingManager.shared.isPaired() {
                 footerButton(title: "Forget Device", icon: "minus.circle", destructive: true) {
                     PairingManager.shared.clearPairing()
@@ -256,10 +280,37 @@ struct MenuBarView: View {
                     lastOTP = nil
                 }
             }
-            footerButton(title: "Quit Bridge", icon: "power", shortcut: "⌘Q") {
-                NSApplication.shared.terminate(nil)
+            
+            Divider().padding(.horizontal, 8).padding(.vertical, 4)
+            
+            // Section 4: Version & Quit
+            HStack {
+                Text("v\(UpdaterManager.currentVersion)")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(.tertiary)
+                    .padding(.leading, 18)
+                Spacer()
+                Button(action: {
+                    NSApplication.shared.terminate(nil)
+                }) {
+                    HStack(spacing: 5) {
+                        Image(systemName: "power")
+                            .font(.system(size: 10))
+                        Text("Quit Bridge")
+                            .font(.system(size: 11))
+                    }
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .background(
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(Color.primary.opacity(0.05))
+                    )
+                }
+                .buttonStyle(.plain)
+                .padding(.trailing, 12)
             }
-            .keyboardShortcut("q", modifiers: .command)
+            .padding(.vertical, 4)
         }
         .padding(.vertical, 5)
     }

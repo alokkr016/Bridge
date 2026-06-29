@@ -9,8 +9,6 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.os.PowerManager
 import android.provider.Settings
 import android.util.Log
@@ -38,27 +36,18 @@ class MainActivity : ComponentActivity() {
 
     companion object {
         private const val TAG = "MainActivity"
-        private const val POLL_INTERVAL_MS = 500L
         private const val PREF_BATTERY_PROMPT_SHOWN = "battery_opt_prompt_shown"
     }
 
     private val webSocketClient by lazy { WebSocketClient.getInstance(this) }
     private var clipboardManager: ClipboardManager? = null
     private var lastSentClip: String? = null
-    private var lastSeenClip: String? = null
-    private val handler = Handler(Looper.getMainLooper())
-    private var hasFocus = false
     private var showBatteryDialog by mutableStateOf(false)
 
-    // Poll every 500ms while in foreground — Samsung doesn't reliably deliver
-    // OnPrimaryClipChangedListener callbacks to third-party apps.
-    private val pollRunnable = object : Runnable {
-        override fun run() {
-            if (hasFocus) {
-                checkAndSendClipboard()
-                handler.postDelayed(this, POLL_INTERVAL_MS)
-            }
-        }
+    // Fires while MainActivity is the foreground app — Android 10+ allows clipboard
+    // reads inside this callback when the activity is visible.
+    private val clipListener = ClipboardManager.OnPrimaryClipChangedListener {
+        sendClipboardIfNew()
     }
 
     private val requestPermissionLauncher = registerForActivityResult(
@@ -73,11 +62,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         checkNotificationListenerPermission()
         clipboardManager = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-        webSocketClient.onClipboardReceived = { text ->
-            lastSentClip = text
-            lastSeenClip = text  // prevent echo-back
-        }
-
+        // Track what Mac sends us so we don't echo it back
+        webSocketClient.onClipboardReceived = { text -> lastSentClip = text }
         ServiceWatchdogWorker.schedule(this)
 
         setContent {
@@ -90,13 +76,13 @@ class MainActivity : ComponentActivity() {
             if (showBatteryDialog) {
                 AlertDialog(
                     onDismissRequest = { dismissBatteryDialog() },
-                    title = { Text("Keep OTP Bridge Running") },
+                    title = { Text("Keep Bridge Running") },
                     text = {
                         Text(
                             "Samsung's battery optimizer can stop the app after a few hours, " +
                             "causing you to miss OTPs.\n\n" +
                             "Go to Settings → Battery → Background usage limits → " +
-                            "Never sleeping apps → Add OTP Bridge."
+                            "Never sleeping apps → Add Bridge."
                         )
                     },
                     confirmButton = {
@@ -117,47 +103,32 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         requestPermissions()
         maybeShowBatteryOptimizationDialog()
-    }
-
-    override fun onPause() {
-        super.onPause()
-        stopPolling()
+        clipboardManager?.addPrimaryClipChangedListener(clipListener)
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
-        this.hasFocus = hasFocus
         if (hasFocus) {
-            startPolling()
-        } else {
-            stopPolling()
+            // OS only grants clipboard access once the window has focus — not during onResume.
+            // Reading here avoids the "application is not in focus" denial from ClipboardService.
+            sendClipboardIfNew()
         }
     }
 
-    private fun startPolling() {
-        handler.removeCallbacks(pollRunnable)
-        handler.post(pollRunnable)
-        Log.d(TAG, "Clipboard polling started")
+    override fun onPause() {
+        super.onPause()
+        clipboardManager?.removePrimaryClipChangedListener(clipListener)
     }
 
-    private fun stopPolling() {
-        hasFocus = false
-        handler.removeCallbacks(pollRunnable)
-        Log.d(TAG, "Clipboard polling stopped")
-    }
-
-    private fun checkAndSendClipboard() {
+    private fun sendClipboardIfNew() {
         val text = try {
             clipboardManager?.primaryClip?.getItemAt(0)?.text?.toString()
-        } catch (e: Exception) {
-            null
-        }
+        } catch (e: Exception) { null }
         if (text.isNullOrEmpty()) return
-        if (text == lastSeenClip) return  // unchanged or just received from Mac
-        lastSeenClip = text
+        if (text == lastSentClip) return
         lastSentClip = text
+        Log.d(TAG, "Clipboard → Mac: ${text.take(40)}")
         webSocketClient.sendClipboard(text)
-        Log.d(TAG, "Clipboard sent to Mac: ${text.take(40)}")
     }
 
     private fun checkNotificationListenerPermission() {

@@ -25,6 +25,7 @@
 		AA000017 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA000117; };
 		AA000020 /* CryptoManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000120; };
 		AA000021 /* OTPExtractorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000121; };
+		AA000099 /* UpdaterManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000199; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -47,6 +48,7 @@
 		AA000121 /* OTPExtractorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OTPExtractorTests.swift; sourceTree = "<group>"; };
 		AA000122 /* SoundManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundManager.swift; sourceTree = "<group>"; };
 		AA000200 /* OTPBridge.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OTPBridge.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		AA000199 /* UpdaterManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdaterManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -89,6 +91,7 @@
 				AA000409 /* Storage */,
 				AA000410 /* MenuBar */,
 				AA000411 /* UI */,
+				AA000412 /* Updater */,
 			);
 			path = OTPBridge;
 			sourceTree = "<group>";
@@ -169,6 +172,14 @@
 				AA000103 /* MenuBarView.swift */,
 			);
 			path = MenuBar;
+			sourceTree = "<group>";
+		};
+		AA000412 /* Updater */ = {
+			isa = PBXGroup;
+			children = (
+				AA000199 /* UpdaterManager.swift */,
+			);
+			path = Updater;
 			sourceTree = "<group>";
 		};
 		AA000411 /* UI */ = {
@@ -284,6 +295,7 @@
 				AA000016 /* PairingWindow.swift in Sources */,
 				AA000019 /* ConnectionDashboard.swift in Sources */,
 				AA000022 /* SoundManager.swift in Sources */,
+				AA000099 /* UpdaterManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -342,7 +354,9 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 2;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Bridge;
 				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Bridge uses Bluetooth to advertise its Wi-Fi connection info to your paired Android device.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_NSMainStoryboardFile = "";
 				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
@@ -353,7 +367,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 1.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = io.github.alokkr016.OTPBridge;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = Bridge;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 			};
@@ -367,7 +381,9 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 2;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Bridge;
 				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Bridge uses Bluetooth to advertise its Wi-Fi connection info to your paired Android device.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_NSMainStoryboardFile = "";
 				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
@@ -378,7 +394,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 1.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = io.github.alokkr016.OTPBridge;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = Bridge;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 			};

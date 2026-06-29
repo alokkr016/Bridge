@@ -62,7 +62,7 @@ fun MainScreen(viewModel: MainViewModel = viewModel()) {
                                 .clip(RoundedCornerShape(6.dp))
                         )
                         Spacer(modifier = Modifier.width(10.dp))
-                        Text("OTP Bridge")
+                        Text("Bridge")
                     }
                 },
                 actions = {

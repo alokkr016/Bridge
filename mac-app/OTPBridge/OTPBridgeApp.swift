@@ -70,6 +70,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         WebSocketServer.shared.start()
         BLEAdvertiser.shared.start()
+        UpdaterManager.shared.checkForUpdates(manually: false)
     }
 
     /// Register the app to launch automatically at login (macOS 13+).
