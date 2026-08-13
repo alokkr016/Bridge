@@ -68,6 +68,7 @@
             android:name=".clipboard.SendSelectionActivity"
             android:exported="true"
             android:label="@string/send_to_bridge"
+            android:icon="@drawable/ic_bridge_infinity"
             android:theme="@style/Theme.OTPBridge.Invisible"
             android:excludeFromRecents="true"
             android:noHistory="true"

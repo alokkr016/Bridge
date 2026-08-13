@@ -11,7 +11,12 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "io.github.alokkr016.otpbridge"
+        // Deliberately sorts first: Android orders the text-selection toolbar's
+        // PROCESS_TEXT items alphabetically by package name (system apps aside),
+        // and a leading digit precedes every letter. Keeps "Send to Bridge" at
+        // the top of that menu instead of last among ~20 handlers.
+        // The Kotlin namespace stays io.github.alokkr016.otpbridge.
+        applicationId = "a0.bridge"
         minSdk = 26
         targetSdk = 35
         versionCode = 10002
