@@ -102,7 +102,7 @@ Server now starts unconditionally in `applicationDidFinishLaunching`.
 
 1. Kill Mac app: `pkill -f OTPBridge`
 2. Clear both sides:
-   - Mac: `defaults delete io.github.alokkr016.OTPBridge`
+   - Mac: `defaults delete io.github.alokkr016.bridge`
    - Android: `adb shell pm clear io.github.alokkr016.otpbridge`
 3. Rebuild: Android with JDK 17, Mac with xcodebuild
 4. Reinstall Android APK, launch both

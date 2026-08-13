@@ -65,11 +65,21 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                     object: nil,
                     userInfo: ["connected": connected]
                 )
+                if !connected {
+                    IncomingCallController.shared.handle(state: "idle", number: "", name: nil)
+                }
+            }
+        }
+
+        WebSocketServer.shared.onCallReceived = { state, number, name in
+            DispatchQueue.main.async {
+                IncomingCallController.shared.handle(state: state, number: number, name: name)
             }
         }
 
         WebSocketServer.shared.start()
         BLEAdvertiser.shared.start()
+        LanBeacon.shared.start()
         UpdaterManager.shared.checkForUpdates(manually: false)
     }
 

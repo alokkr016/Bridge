@@ -19,6 +19,7 @@ import androidx.core.content.ContextCompat
 import io.github.alokkr016.otpbridge.MainActivity
 import io.github.alokkr016.otpbridge.R
 import io.github.alokkr016.otpbridge.notification.NotificationHelper
+import io.github.alokkr016.otpbridge.call.CallController
 import io.github.alokkr016.otpbridge.pairing.BLEScanner
 import io.github.alokkr016.otpbridge.websocket.WebSocketClient
 
@@ -32,6 +33,7 @@ class BridgeForegroundService : Service() {
 
     private val webSocketClient by lazy { WebSocketClient.getInstance(this) }
     private val bleScanner by lazy { BLEScanner(this) }
+    private val callController by lazy { CallController(this) }
     private var wakeLock: PowerManager.WakeLock? = null
     private var wifiLock: WifiManager.WifiLock? = null
 
@@ -65,11 +67,25 @@ class BridgeForegroundService : Service() {
             webSocketClient.reconnect()
         }
 
-        // When TCP connection drops, scan BLE to find Mac's new IP (requires runtime BT permission)
+        // Handshake means we have the right IP — stop burning BLE.
+        webSocketClient.onHandshakeComplete = {
+            Log.d(TAG, "Handshake complete — stopping BLE watch")
+            bleScanner.stopWatching()
+        }
+
+        // Drop or failed connect: keep scanning until the Mac advertises a new IP
         webSocketClient.onDisconnected = {
-            Log.d(TAG, "Connection lost — starting BLE scan for Mac IP")
+            Log.d(TAG, "Connection lost — watching BLE for Mac IP")
             tryStartBLEScan()
         }
+
+        callController.onCallState = { state, number, name ->
+            webSocketClient.sendCall(state, number, name)
+        }
+        webSocketClient.onCallControl = { action ->
+            callController.handleControl(action)
+        }
+        callController.start()
 
         webSocketClient.connect()
 
@@ -87,7 +103,7 @@ class BridgeForegroundService : Service() {
             return
         }
         try {
-            bleScanner.startScan()
+            bleScanner.startWatching()
         } catch (e: SecurityException) {
             Log.w(TAG, "BLE scan denied: ${e.message}")
         } catch (e: Exception) {
@@ -96,7 +112,8 @@ class BridgeForegroundService : Service() {
     }
 
     override fun onDestroy() {
-        bleScanner.stopScan()
+        callController.stop()
+        bleScanner.stopWatching()
         wakeLock?.release()
         wifiLock?.release()
         webSocketClient.disconnect()

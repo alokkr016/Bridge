@@ -13,6 +13,7 @@ class WebSocketServer {
     private let pairingManager = PairingManager.shared
 
     var onOTPReceived: ((String, String, String?, TimeInterval) -> Void)?
+    var onCallReceived: ((String, String, String?) -> Void)?
 
     var isConnected = false {
         didSet {
@@ -92,12 +93,28 @@ class WebSocketServer {
         readLoop(connection: newConnection)
     }
 
+    /// Only the *current* connection may flip UI / server state. A cancelled
+    /// predecessor's read loop finishing after a reconnect used to set
+    /// `isConnected = false` and nil out the new socket, leaving the menu bar
+    /// stuck on Offline even though TCP + handshake had succeeded.
+    private func markDisconnected(ifCurrent candidate: NWConnection) {
+        guard connection === candidate else {
+            NSLog("[OTPBridge] Ignoring close from stale connection")
+            return
+        }
+        isConnected = false
+        connection = nil
+        sharedSecret = nil
+        DispatchQueue.main.async {
+            ClipboardManager.shared.stopSyncing()
+        }
+    }
+
     private func readLoop(connection: NWConnection) {
         readFourBytes(connection: connection) { [weak self] lengthData in
             guard let self = self, let ld = lengthData else {
                 NSLog("[OTPBridge] Connection closed or error reading length")
-                self?.isConnected = false
-                self?.connection = nil
+                self?.markDisconnected(ifCurrent: connection)
                 return
             }
             let length = Int(ld[0]) << 24 | Int(ld[1]) << 16 | Int(ld[2]) << 8 | Int(ld[3])
@@ -105,15 +122,13 @@ class WebSocketServer {
             if length == 0 { self.readLoop(connection: connection); return }
             guard length < 1_000_000 else {
                 NSLog("[OTPBridge] Invalid length \(length), disconnecting")
-                self.isConnected = false
-                self.connection = nil
+                self.markDisconnected(ifCurrent: connection)
                 return
             }
             self.readBytes(connection: connection, count: length) { payloadData in
                 guard let data = payloadData else {
                     NSLog("[OTPBridge] Error reading payload")
-                    self.isConnected = false
-                    self.connection = nil
+                    self.markDisconnected(ifCurrent: connection)
                     return
                 }
                 self.processMessage(data)
@@ -129,7 +144,15 @@ class WebSocketServer {
                 completion(nil)
                 return
             }
-            if isComplete { completion(nil); return }
+            // isComplete can arrive together with the last bytes — don't drop them.
+            if let data, data.count == 4 {
+                completion(data)
+                return
+            }
+            if isComplete || data == nil {
+                completion(nil)
+                return
+            }
             completion(data)
         }
     }
@@ -141,7 +164,14 @@ class WebSocketServer {
                 completion(nil)
                 return
             }
-            if isComplete { completion(nil); return }
+            if let data, data.count == count {
+                completion(data)
+                return
+            }
+            if isComplete || data == nil {
+                completion(nil)
+                return
+            }
             completion(data)
         }
     }
@@ -170,6 +200,14 @@ class WebSocketServer {
                         DispatchQueue.main.async {
                             ClipboardManager.shared.receiveFromAndroid(text)
                         }
+                    }
+                } else if type == "call" {
+                    let state = json?["state"] as? String ?? "idle"
+                    let number = json?["number"] as? String ?? ""
+                    let name = json?["name"] as? String
+                    NSLog("[OTPBridge] Call \(state) \(name ?? number)")
+                    DispatchQueue.main.async {
+                        self.onCallReceived?(state, number, name)
                     }
                 }
             } catch {
@@ -244,6 +282,18 @@ class WebSocketServer {
                 NSLog("[OTPBridge] Send error: \(error)")
             }
         })
+    }
+
+    func sendCallControl(_ action: String) {
+        guard let secret = sharedSecret else { return }
+        do {
+            let payload = try JSONSerialization.data(withJSONObject: ["type": "call_control", "action": action])
+            let encrypted = try cryptoManager.encrypt(plaintext: payload, key: secret)
+            sendBinary(encrypted)
+            NSLog("[OTPBridge] Call control sent: \(action)")
+        } catch {
+            NSLog("[OTPBridge] Failed to send call control: \(error)")
+        }
     }
 
     func sendClipboard(_ text: String) {

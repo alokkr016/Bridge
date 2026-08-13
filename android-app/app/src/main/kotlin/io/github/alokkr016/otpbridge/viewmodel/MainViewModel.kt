@@ -47,7 +47,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun connectToMac() {
         if (pairingManager.isPaired()) {
-            webSocketClient.connect()
+            // Force a full reset. connect() no-ops while isConnecting, so a
+            // stuck reconnect loop would ignore the button otherwise.
+            webSocketClient.reconnect()
         }
     }
 

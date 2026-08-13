@@ -7,25 +7,26 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		AA000001 /* OTPBridgeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000101; };
-		AA000003 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000103; };
-		AA000006 /* CryptoManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000106; };
-		AA000007 /* KeyPairStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000107; };
-		AA000008 /* PairingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000108; };
-		AA000009 /* QRCodeGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000109; };
-		AA000010 /* WebSocketServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000110; };
-		AA000011 /* ClipboardManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000111; };
-		AA000012 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000112; };
-		AA000013 /* OTPRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000113; };
-		AA000014 /* StorageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000114; };
-		AA000016 /* PairingWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000116; };
-		AA000019 /* ConnectionDashboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000119; };
-		AA000022 /* SoundManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000122; };
-		AA000018 /* BLEAdvertiser.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000118; };
-		AA000017 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA000117; };
-		AA000020 /* CryptoManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000120; };
-		AA000021 /* OTPExtractorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000121; };
-		AA000099 /* UpdaterManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000199; };
+		AA000001 /* OTPBridgeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000101 /* OTPBridgeApp.swift */; };
+		AA000003 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000103 /* MenuBarView.swift */; };
+		AA000006 /* CryptoManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000106 /* CryptoManager.swift */; };
+		AA000007 /* KeyPairStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000107 /* KeyPairStore.swift */; };
+		AA000008 /* PairingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000108 /* PairingManager.swift */; };
+		AA000009 /* QRCodeGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000109 /* QRCodeGenerator.swift */; };
+		AA000010 /* WebSocketServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000110 /* WebSocketServer.swift */; };
+		AA000011 /* ClipboardManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000111 /* ClipboardManager.swift */; };
+		AA000012 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000112 /* NotificationManager.swift */; };
+		AA000013 /* OTPRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000113 /* OTPRecord.swift */; };
+		AA000014 /* StorageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000114 /* StorageManager.swift */; };
+		AA000016 /* PairingWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000116 /* PairingWindow.swift */; };
+		AA000017 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA000117 /* Assets.xcassets */; };
+		AA000018 /* BLEAdvertiser.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000118 /* BLEAdvertiser.swift */; };
+		AA000019 /* ConnectionDashboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000119 /* ConnectionDashboard.swift */; };
+		AA000020 /* CryptoManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000120 /* CryptoManagerTests.swift */; };
+		AA000021 /* OTPExtractorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000121 /* OTPExtractorTests.swift */; };
+		AA000022 /* SoundManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000122 /* SoundManager.swift */; };
+		AA000099 /* UpdaterManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000199 /* UpdaterManager.swift */; };
+		AA000023 /* IncomingCallWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000123 /* IncomingCallWindow.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -41,14 +42,15 @@
 		AA000113 /* OTPRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OTPRecord.swift; sourceTree = "<group>"; };
 		AA000114 /* StorageManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageManager.swift; sourceTree = "<group>"; };
 		AA000116 /* PairingWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairingWindow.swift; sourceTree = "<group>"; };
-		AA000119 /* ConnectionDashboard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionDashboard.swift; sourceTree = "<group>"; };
-		AA000118 /* BLEAdvertiser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEAdvertiser.swift; sourceTree = "<group>"; };
 		AA000117 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		AA000118 /* BLEAdvertiser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEAdvertiser.swift; sourceTree = "<group>"; };
+		AA000119 /* ConnectionDashboard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionDashboard.swift; sourceTree = "<group>"; };
 		AA000120 /* CryptoManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CryptoManagerTests.swift; sourceTree = "<group>"; };
 		AA000121 /* OTPExtractorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OTPExtractorTests.swift; sourceTree = "<group>"; };
 		AA000122 /* SoundManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundManager.swift; sourceTree = "<group>"; };
-		AA000200 /* OTPBridge.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OTPBridge.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA000199 /* UpdaterManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdaterManager.swift; sourceTree = "<group>"; };
+		AA000123 /* IncomingCallWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IncomingCallWindow.swift; sourceTree = "<group>"; };
+		AA000200 /* Bridge.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Bridge.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -108,7 +110,7 @@
 		AA000403 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				AA000200 /* OTPBridge.app */,
+				AA000200 /* Bridge.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -174,6 +176,16 @@
 			path = MenuBar;
 			sourceTree = "<group>";
 		};
+		AA000411 /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				AA000116 /* PairingWindow.swift */,
+				AA000119 /* ConnectionDashboard.swift */,
+				AA000123 /* IncomingCallWindow.swift */,
+			);
+			path = UI;
+			sourceTree = "<group>";
+		};
 		AA000412 /* Updater */ = {
 			isa = PBXGroup;
 			children = (
@@ -182,21 +194,12 @@
 			path = Updater;
 			sourceTree = "<group>";
 		};
-		AA000411 /* UI */ = {
-			isa = PBXGroup;
-			children = (
-				AA000116 /* PairingWindow.swift */,
-				AA000119 /* ConnectionDashboard.swift */,
-			);
-			path = UI;
-			sourceTree = "<group>";
-		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
 		AA000500 /* OTPBridge */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = AA000700;
+			buildConfigurationList = AA000700 /* Build configuration list for PBXNativeTarget "OTPBridge" */;
 			buildPhases = (
 				AA000300 /* Frameworks */,
 				AA000600 /* Sources */,
@@ -208,12 +211,12 @@
 			);
 			name = OTPBridge;
 			productName = OTPBridge;
-			productReference = AA000200 /* OTPBridge.app */;
+			productReference = AA000200 /* Bridge.app */;
 			productType = "com.apple.product-type.application";
 		};
 		AA000501 /* OTPBridgeTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = AA000701;
+			buildConfigurationList = AA000701 /* Build configuration list for PBXNativeTarget "OTPBridgeTests" */;
 			buildPhases = (
 				AA000301 /* Frameworks */,
 				AA000601 /* Sources */,
@@ -227,17 +230,6 @@
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
-
-/* Begin PBXResourcesBuildPhase section */
-		AA000602 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				AA000017 /* Assets.xcassets in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXProject section */
 		AA000800 /* Project object */ = {
@@ -256,7 +248,7 @@
 					};
 				};
 			};
-			buildConfigurationList = AA000702;
+			buildConfigurationList = AA000702 /* Build configuration list for PBXProject "OTPBridge" */;
 			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -274,6 +266,17 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		AA000602 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AA000017 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		AA000600 /* Sources */ = {
@@ -296,6 +299,7 @@
 				AA000019 /* ConnectionDashboard.swift in Sources */,
 				AA000022 /* SoundManager.swift in Sources */,
 				AA000099 /* UpdaterManager.swift in Sources */,
+				AA000023 /* IncomingCallWindow.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -353,8 +357,10 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 3;
+				DEVELOPMENT_TEAM = M5Q7N9D29M;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Bridge;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Bridge uses Bluetooth to advertise its Wi-Fi connection info to your paired Android device.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
@@ -366,7 +372,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 1.0.2;
-				PRODUCT_BUNDLE_IDENTIFIER = io.github.alokkr016.OTPBridge;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.alokkr016.bridge;
 				PRODUCT_NAME = Bridge;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -380,8 +386,10 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 3;
+				DEVELOPMENT_TEAM = M5Q7N9D29M;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Bridge;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Bridge uses Bluetooth to advertise its Wi-Fi connection info to your paired Android device.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
@@ -393,7 +401,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 1.0.2;
-				PRODUCT_BUNDLE_IDENTIFIER = io.github.alokkr016.OTPBridge;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.alokkr016.bridge;
 				PRODUCT_NAME = Bridge;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -406,10 +414,11 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 3;
+				DEVELOPMENT_TEAM = M5Q7N9D29M;
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 1.0.2;
-				PRODUCT_BUNDLE_IDENTIFIER = io.github.alokkr016.OTPBridgeTests;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.alokkr016.bridgeTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
@@ -422,10 +431,11 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 3;
+				DEVELOPMENT_TEAM = M5Q7N9D29M;
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 1.0.2;
-				PRODUCT_BUNDLE_IDENTIFIER = io.github.alokkr016.OTPBridgeTests;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.alokkr016.bridgeTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
@@ -435,15 +445,6 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		AA000702 /* Build configuration list for PBXProject "OTPBridge" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				AA000900 /* Debug */,
-				AA000901 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
 		AA000700 /* Build configuration list for PBXNativeTarget "OTPBridge" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -462,8 +463,16 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		AA000702 /* Build configuration list for PBXProject "OTPBridge" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA000900 /* Debug */,
+				AA000901 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
-
 	};
 	rootObject = AA000800 /* Project object */;
 }

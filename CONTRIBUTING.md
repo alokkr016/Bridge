@@ -38,7 +38,7 @@ This section is designed for AI coding agents working on this codebase.
 | Fact | Detail |
 |------|--------|
 | Android package | `io.github.alokkr016.otpbridge` |
-| macOS bundle ID | `io.github.alokkr016.OTPBridge` |
+| macOS bundle ID | `io.github.alokkr016.bridge` |
 | Port | 8420 (TCP) |
 | Protocol | Custom raw TCP with `[4-byte length][payload]` framing |
 | Encryption | X25519 + ChaCha20-Poly1305 |

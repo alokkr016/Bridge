@@ -1,19 +1,34 @@
 package io.github.alokkr016.otpbridge.pairing
 
-import android.bluetooth.*
-import android.bluetooth.le.*
+import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothGatt
+import android.bluetooth.BluetoothGattCallback
+import android.bluetooth.BluetoothGattCharacteristic
+import android.bluetooth.BluetoothManager
+import android.bluetooth.BluetoothProfile
+import android.bluetooth.le.ScanCallback
+import android.bluetooth.le.ScanResult
+import android.bluetooth.le.ScanSettings
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
-import android.os.ParcelUuid
 import android.util.Log
+import java.net.DatagramPacket
+import java.net.DatagramSocket
+import java.net.InetSocketAddress
+import java.net.SocketTimeoutException
 import java.util.UUID
 
 /**
- * Scans for the Mac's BLE advertisement to discover its current IP address.
- * When found, updates the stored IP in KeyPairStore and triggers a reconnect.
- * This lets the Android app reconnect automatically when the Mac's IP changes
- * (e.g. different Wi-Fi network) without requiring a full re-pair.
+ * Finds the paired Mac after its LAN IP changes.
+ *
+ * Primary path: the Mac encodes IPv4 in its BLE local name (`B` + 8 hex digits).
+ * That avoids a GATT round-trip and avoids Android's service-UUID scan filter,
+ * which silently misses macOS advertisements (128-bit UUID lives in the overflow
+ * / scan-response packet).
+ *
+ * Fallback: if the advert looks like Bridge but has no encoded name, connect
+ * GATT and read the IP characteristic.
  */
 class BLEScanner(private val context: Context) {
 
@@ -21,7 +36,19 @@ class BLEScanner(private val context: Context) {
         private const val TAG = "BLEScanner"
         val SERVICE_UUID: UUID = UUID.fromString("F0F1F2F3-F4F5-F6F7-F8F9-FAFBFCFDFEFF")
         val IP_CHAR_UUID: UUID = UUID.fromString("F0F1F2F3-F4F5-F6F7-F8F9-FAFBFCFDFE01")
-        private const val SCAN_PERIOD_MS = 10_000L
+        private const val SCAN_PERIOD_MS = 12_000L
+        private const val SCAN_PAUSE_MS = 15_000L
+        private const val GATT_TIMEOUT_MS = 8_000L
+        private const val UDP_BEACON_PORT = 8421
+        private val ENCODED_NAME = Regex("^B[0-9A-Fa-f]{8}$")
+        private val IPV4 = Regex("^((25[0-5]|2[0-4]\\d|[01]?\\d\\d?)\\.){3}(25[0-5]|2[0-4]\\d|[01]?\\d\\d?)$")
+
+        fun decodeBleName(name: String): String? {
+            if (!ENCODED_NAME.matches(name)) return null
+            val bytes = name.substring(1).chunked(2).map { it.toInt(16) }
+            val ip = bytes.joinToString(".")
+            return if (ip != "0.0.0.0" && IPV4.matches(ip)) ip else null
+        }
     }
 
     private val bluetoothManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
@@ -29,68 +56,135 @@ class BLEScanner(private val context: Context) {
     private val keyPairStore = io.github.alokkr016.otpbridge.crypto.KeyPairStore(context)
     private val handler = Handler(Looper.getMainLooper())
     private var scanning = false
+    private var watching = false
     private var gatt: BluetoothGatt? = null
+    private var udpSocket: DatagramSocket? = null
+    private var udpThread: Thread? = null
+    private val seenAds = LinkedHashSet<String>()
 
     var onIPDiscovered: ((String) -> Unit)? = null
 
     private val scanCallback = object : ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult) {
-            Log.d(TAG, "Found BLE device: ${result.device.address}")
-            stopScan()
-            connectToDevice(result.device)
+            handleScanResult(result)
+        }
+        override fun onBatchScanResults(results: MutableList<ScanResult>) {
+            results.forEach(::handleScanResult)
         }
         override fun onScanFailed(errorCode: Int) {
             Log.w(TAG, "Scan failed: $errorCode")
             scanning = false
+            scheduleNextScan()
         }
+    }
+
+    /** Keep scanning in short bursts until [stopWatching] or an IP is found. */
+    fun startWatching() {
+        if (watching) {
+            Log.d(TAG, "Already watching for Mac IP")
+            return
+        }
+        watching = true
+        Log.d(TAG, "Start watching for Mac IP (UDP + BLE)")
+        startUdpListen()
+        startScan()
+    }
+
+    fun stopWatching() {
+        watching = false
+        handler.removeCallbacksAndMessages(null)
+        stopUdpListen()
+        stopScan()
+        closeGatt()
+        Log.d(TAG, "Stopped watching")
     }
 
     fun startScan() {
         if (scanning) return
         val leScanner = scanner ?: run {
             Log.w(TAG, "BLE not available")
+            scheduleNextScan()
             return
         }
         scanning = true
-        val filter = ScanFilter.Builder()
-            .setServiceUuid(ParcelUuid(SERVICE_UUID))
-            .build()
+        // No service-UUID filter. macOS puts the 128-bit UUID in the overflow
+        // packet; a filter on it makes the Mac invisible.
         val settings = ScanSettings.Builder()
             .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
             .build()
         try {
-            leScanner.startScan(listOf(filter), settings, scanCallback)
+            leScanner.startScan(emptyList(), settings, scanCallback)
         } catch (e: SecurityException) {
             Log.w(TAG, "BLE scan permission denied: ${e.message}")
             scanning = false
             return
         }
         Log.d(TAG, "BLE scan started")
-        handler.postDelayed({ stopScan() }, SCAN_PERIOD_MS)
+        handler.postDelayed({
+            stopScan()
+            scheduleNextScan()
+        }, SCAN_PERIOD_MS)
     }
 
     fun stopScan() {
         if (!scanning) return
         scanning = false
-        scanner?.stopScan(scanCallback)
+        try {
+            scanner?.stopScan(scanCallback)
+        } catch (_: SecurityException) {
+        }
         Log.d(TAG, "BLE scan stopped")
     }
 
+    private fun scheduleNextScan() {
+        if (!watching || scanning || gatt != null) return
+        handler.postDelayed({
+            if (watching && !scanning) startScan()
+        }, SCAN_PAUSE_MS)
+    }
+
+    private fun handleScanResult(result: ScanResult) {
+        val record = result.scanRecord
+        val deviceName = try { result.device.name } catch (_: SecurityException) { null }
+        val addr = result.device.address
+        if (seenAds.add(addr) && seenAds.size <= 40) {
+            Log.d(TAG, "BLE seen $addr name=${record?.deviceName ?: deviceName} uuids=${record?.serviceUuids}")
+        }
+        val names = listOfNotNull(record?.deviceName, deviceName)
+        for (name in names) {
+            val ip = decodeBleName(name)
+            if (ip != null) {
+                Log.d(TAG, "Mac IP from BLE name $name → $ip")
+                stopScan()
+                applyIP(ip)
+                return
+            }
+        }
+        val looksLikeBridge = names.any { it.equals("Bridge", ignoreCase = true) } ||
+            record?.serviceUuids?.any { it.uuid == SERVICE_UUID } == true
+        if (looksLikeBridge && gatt == null) {
+            Log.d(TAG, "Bridge advert without encoded IP — GATT fallback")
+            stopScan()
+            connectToDevice(result.device)
+        }
+    }
+
     private fun connectToDevice(device: BluetoothDevice) {
-        gatt = device.connectGatt(context, false, object : BluetoothGattCallback() {
+        closeGatt()
+        val callback = object : BluetoothGattCallback() {
             override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
                 if (newState == BluetoothProfile.STATE_CONNECTED) {
                     Log.d(TAG, "GATT connected — discovering services")
                     gatt.discoverServices()
                 } else {
-                    Log.d(TAG, "GATT disconnected")
-                    gatt.close()
+                    Log.d(TAG, "GATT disconnected status=$status")
+                    closeGatt()
+                    scheduleNextScan()
                 }
             }
 
             override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
-                val char = gatt.getService(SERVICE_UUID)
-                    ?.getCharacteristic(IP_CHAR_UUID)
+                val char = gatt.getService(SERVICE_UUID)?.getCharacteristic(IP_CHAR_UUID)
                 if (char != null) {
                     gatt.readCharacteristic(char)
                 } else {
@@ -106,12 +200,8 @@ class BLEScanner(private val context: Context) {
                 status: Int
             ) {
                 if (status == BluetoothGatt.GATT_SUCCESS && characteristic.uuid == IP_CHAR_UUID) {
-                    val ip = characteristic.value?.toString(Charsets.UTF_8) ?: ""
-                    Log.d(TAG, "Mac IP from BLE: $ip")
+                    handleRead(characteristic.value)
                     gatt.disconnect()
-                    if (ip.isNotEmpty()) {
-                        updateStoredIP(ip)
-                    }
                 }
             }
 
@@ -122,18 +212,33 @@ class BLEScanner(private val context: Context) {
                 status: Int
             ) {
                 if (status == BluetoothGatt.GATT_SUCCESS && characteristic.uuid == IP_CHAR_UUID) {
-                    val ip = value.toString(Charsets.UTF_8)
-                    Log.d(TAG, "Mac IP from BLE: $ip")
+                    handleRead(value)
                     gatt.disconnect()
-                    if (ip.isNotEmpty()) {
-                        updateStoredIP(ip)
-                    }
                 }
             }
-        })
+        }
+        gatt = try {
+            device.connectGatt(context, false, callback, BluetoothDevice.TRANSPORT_LE)
+        } catch (e: SecurityException) {
+            Log.w(TAG, "GATT connect denied: ${e.message}")
+            null
+        }
+        handler.postDelayed({
+            if (gatt != null) {
+                Log.w(TAG, "GATT timeout")
+                closeGatt()
+                scheduleNextScan()
+            }
+        }, GATT_TIMEOUT_MS)
     }
 
-    private fun updateStoredIP(newIP: String) {
+    private fun handleRead(value: ByteArray?) {
+        val ip = value?.toString(Charsets.UTF_8)?.trim().orEmpty()
+        Log.d(TAG, "Mac IP from GATT: $ip")
+        if (IPV4.matches(ip) && ip != "0.0.0.0") applyIP(ip)
+    }
+
+    private fun applyIP(newIP: String) {
         val device = keyPairStore.getPairedDevice() ?: return
         if (device.ip == newIP) {
             Log.d(TAG, "IP unchanged ($newIP), no update needed")
@@ -147,6 +252,60 @@ class BLEScanner(private val context: Context) {
             port = device.port,
             sharedSecret = device.sharedSecret
         )
+        watching = false
+        handler.removeCallbacksAndMessages(null)
         handler.post { onIPDiscovered?.invoke(newIP) }
+    }
+
+    private fun startUdpListen() {
+        if (udpThread?.isAlive == true) return
+        udpThread = Thread({
+            try {
+                val sock = DatagramSocket(null).apply {
+                    reuseAddress = true
+                    broadcast = true
+                    bind(InetSocketAddress(UDP_BEACON_PORT))
+                    soTimeout = 1500
+                }
+                udpSocket = sock
+                Log.d(TAG, "UDP beacon listen on $UDP_BEACON_PORT")
+                val buf = ByteArray(128)
+                while (watching && !Thread.currentThread().isInterrupted) {
+                    try {
+                        val packet = DatagramPacket(buf, buf.size)
+                        sock.receive(packet)
+                        val text = String(packet.data, 0, packet.length, Charsets.UTF_8).trim()
+                        val parts = text.split(Regex("\\s+"))
+                        if (parts.size >= 3 && parts[0] == "OTPBRIDGE" && IPV4.matches(parts[1])) {
+                            Log.d(TAG, "Mac IP from UDP beacon: ${parts[1]} (from ${packet.address.hostAddress})")
+                            handler.post { applyIP(parts[1]) }
+                        }
+                    } catch (_: SocketTimeoutException) {
+                    }
+                }
+                sock.close()
+            } catch (e: Exception) {
+                Log.w(TAG, "UDP listen failed: ${e.message}")
+            }
+        }, "bridge-lan-beacon").apply {
+            isDaemon = true
+            start()
+        }
+    }
+
+    private fun stopUdpListen() {
+        try { udpSocket?.close() } catch (_: Exception) {}
+        udpSocket = null
+        udpThread?.interrupt()
+        udpThread = null
+    }
+
+    private fun closeGatt() {
+        try {
+            gatt?.disconnect()
+            gatt?.close()
+        } catch (_: Exception) {
+        }
+        gatt = null
     }
 }

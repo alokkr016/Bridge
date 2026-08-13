@@ -52,17 +52,18 @@ class WebSocketClient private constructor(private val context: Context) {
     var onClipboardReceived: ((String) -> Unit)? = null
     var onDisconnected: (() -> Unit)? = null
     var onHandshakeComplete: (() -> Unit)? = null
+    var onCallControl: ((String) -> Unit)? = null
 
     fun connect() {
         if (isConnected || isConnecting) {
             Log.d(TAG, "Already connected/connecting, skipping connect()")
             return
         }
-        isConnecting = true
         val pairedDevice = keyPairStore.getPairedDevice() ?: run {
             Log.w(TAG, "No paired device found")
             return
         }
+        isConnecting = true
 
         sharedSecret = pairedDevice.sharedSecret
 
@@ -70,8 +71,11 @@ class WebSocketClient private constructor(private val context: Context) {
             try {
                 Log.d(TAG, "Connecting to ${pairedDevice.ip}:${pairedDevice.port}")
                 val s = Socket()
-                s.keepAlive = true          // OS-level TCP keepalive
-                s.soTimeout = 30_000        // 30s read timeout — forces disconnect detection
+                s.keepAlive = true
+                // Do not set a read timeout. The Mac is silent after handshake
+                // (it only sends clipboard / handshake_ack). A 30s soTimeout
+                // was tearing down healthy sockets and racing the Mac into Offline.
+                s.soTimeout = 0
                 s.connect(InetSocketAddress(pairedDevice.ip, pairedDevice.port), 5000)
                 socket = s
                 input = DataInputStream(s.getInputStream())
@@ -89,6 +93,8 @@ class WebSocketClient private constructor(private val context: Context) {
                 isConnecting = false
                 withContext(Dispatchers.Main) {
                     onConnectionChanged?.invoke(false)
+                    // Same path as a drop so BLE can refresh a stale Mac IP
+                    onDisconnected?.invoke()
                 }
                 scheduleReconnect()
             }
@@ -139,6 +145,12 @@ class WebSocketClient private constructor(private val context: Context) {
                                             onClipboardReceived?.invoke(text)
                                             Log.d(TAG, "Clipboard received from Mac")
                                         }
+                                    }
+                                }
+                                "call_control" -> {
+                                    val action = msgJson.optString("action")
+                                    withContext(Dispatchers.Main) {
+                                        onCallControl?.invoke(action)
                                     }
                                 }
                             }
@@ -229,6 +241,27 @@ class WebSocketClient private constructor(private val context: Context) {
             bytes
         } catch (e: Exception) {
             null
+        }
+    }
+
+    fun sendCall(state: String, number: String, name: String?) {
+        if (!isConnected || !handshakeComplete || sharedSecret == null) {
+            Log.w(TAG, "Not ready to send call state")
+            return
+        }
+        scope.launch {
+            try {
+                val obj = org.json.JSONObject()
+                    .put("type", "call")
+                    .put("state", state)
+                    .put("number", number)
+                if (!name.isNullOrBlank()) obj.put("name", name)
+                val encrypted = cryptoManager.encrypt(obj.toString().toByteArray(), sharedSecret!!)
+                sendFrame(encrypted)
+                Log.d(TAG, "Call state sent: $state $number")
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to send call state: ${e.message}")
+            }
         }
     }
 
