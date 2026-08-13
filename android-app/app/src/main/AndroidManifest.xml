@@ -49,6 +49,30 @@
             </intent-filter>
         </activity>
 
+        <!-- Invisible focus-holder so the tile / notification paths can legally
+             read the clipboard on Android 10+. Never user-visible. -->
+        <activity
+            android:name=".clipboard.ClipboardRelayActivity"
+            android:exported="false"
+            android:theme="@style/Theme.OTPBridge.Invisible"
+            android:launchMode="singleInstance"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:finishOnTaskLaunch="true" />
+
+        <!-- Quick Settings tile: one pull-down + tap sends the clipboard. -->
+        <service
+            android:name=".clipboard.ClipboardTileService"
+            android:exported="true"
+            android:icon="@android:drawable/ic_menu_send"
+            android:label="@string/tile_clipboard_label"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
         <service
             android:name=".notification.OTNotificationListenerService"
             android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"

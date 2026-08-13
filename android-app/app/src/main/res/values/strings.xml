@@ -9,4 +9,6 @@
     <string name="no_otps">No OTPs received yet</string>
     <string name="notification_listener_permission">Please enable Bridge notification access in Settings</string>
     <string name="pairing_instructions">Point your camera at the QR code displayed on your Mac</string>
+    <string name="send_clipboard">Send clipboard</string>
+    <string name="tile_clipboard_label">Send clipboard to Mac</string>
 </resources>

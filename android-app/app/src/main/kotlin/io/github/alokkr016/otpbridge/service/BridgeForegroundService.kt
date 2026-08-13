@@ -20,6 +20,7 @@ import io.github.alokkr016.otpbridge.MainActivity
 import io.github.alokkr016.otpbridge.R
 import io.github.alokkr016.otpbridge.notification.NotificationHelper
 import io.github.alokkr016.otpbridge.call.CallController
+import io.github.alokkr016.otpbridge.clipboard.ClipboardRelayActivity
 import io.github.alokkr016.otpbridge.pairing.BLEScanner
 import io.github.alokkr016.otpbridge.websocket.WebSocketClient
 
@@ -147,11 +148,25 @@ class BridgeForegroundService : Service() {
             Intent(this, MainActivity::class.java),
             PendingIntent.FLAG_IMMUTABLE
         )
+        // The service itself can't read the clipboard (no window focus), so this
+        // action routes through the invisible relay activity, which can.
+        val clipIntent = PendingIntent.getActivity(
+            this, 1,
+            Intent(this, ClipboardRelayActivity::class.java).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            },
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setContentTitle("Bridge")
             .setContentText("Running in background")
             .setContentIntent(pendingIntent)
+            .addAction(
+                android.R.drawable.ic_menu_send,
+                getString(R.string.send_clipboard),
+                clipIntent
+            )
             .setOngoing(true)
             .build()
     }
