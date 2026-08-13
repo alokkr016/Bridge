@@ -89,6 +89,8 @@ struct PairingWindow: View {
         .onDisappear {
             pollTimer?.invalidate()
             pollTimer = nil
+            // Close the pairing window's trust exception as soon as it goes away.
+            PairingManager.shared.endPairingMode()
         }
     }
 
@@ -105,6 +107,8 @@ struct PairingWindow: View {
 
     private func startPairing() {
         if isConnected { return }
+        // Opens the only window in which an unknown device may pair.
+        PairingManager.shared.beginPairingMode()
         pairingURL = PairingManager.shared.getPairingURL()
         if let url = pairingURL {
             qrImage = QRCodeGenerator.generate(from: url)
@@ -116,6 +120,8 @@ struct PairingWindow: View {
                 self.pairedDeviceId = deviceId
                 self.pollTimer?.invalidate()
                 self.pollTimer = nil
+                // Paired — no reason to keep accepting new devices.
+                PairingManager.shared.endPairingMode()
             }
         }
 

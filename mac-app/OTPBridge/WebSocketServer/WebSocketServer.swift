@@ -194,7 +194,9 @@ class WebSocketServer {
                     // Android sends millis; convert to seconds for TimeInterval
                     let rawTs = json?["timestamp"] as? TimeInterval ?? (Date().timeIntervalSince1970 * 1000)
                     let timestamp = rawTs > 1_000_000_000_000 ? rawTs / 1000.0 : rawTs
-                    NSLog("[OTPBridge] OTP received: \(otp) from \(company ?? sender)")
+                    // Never log the code itself — the unified log is readable by
+                    // other local processes and persists in diagnostics.
+                    NSLog("[OTPBridge] OTP received (\(otp.count) digits) from \(company ?? sender)")
                     DispatchQueue.main.async {
                         self.onOTPReceived?(sender, otp, company, timestamp)
                     }
@@ -250,6 +252,17 @@ class WebSocketServer {
 
             let publicKeyData = Data(base64Encoded: publicKeyB64) ?? Data()
             NSLog("[OTPBridge] Handshake from \(deviceId), keyLen=\(publicKeyData.count)")
+
+            // Only the paired phone, or a device the user is actively pairing,
+            // may establish a session. Without this any host on the LAN could
+            // hand us a key and start receiving OTPs.
+            guard pairingManager.shouldAcceptHandshake(publicKeyData: publicKeyData) else {
+                NSLog("[OTPBridge] Handshake refused — closing connection")
+                connection?.cancel()
+                connection = nil
+                isConnected = false
+                return
+            }
 
             try pairingManager.completePairing(deviceId: deviceId, publicKeyData: publicKeyData)
             NSLog("[OTPBridge] Pairing saved")

@@ -201,7 +201,9 @@ final class TCPServer {
             let company = json["company"] as? String
             let rawTs = json["timestamp"] as? TimeInterval ?? (Date().timeIntervalSince1970 * 1000)
             let timestamp = rawTs > 1_000_000_000_000 ? rawTs / 1000.0 : rawTs
-            NSLog("[BridgePad] OTP \(otp) from \(company ?? sender)")
+            // Never log the code itself — the log is readable by other local
+            // processes and persists in diagnostics.
+            NSLog("[BridgePad] OTP received (\(otp.count) digits) from \(company ?? sender)")
             DispatchQueue.main.async {
                 self.onOTPReceived?(sender, otp, company, timestamp)
             }
@@ -228,6 +230,17 @@ final class TCPServer {
                   let publicKeyB64 = json["public_key"] as? String,
                   let publicKeyData = Data(base64Encoded: publicKeyB64) else {
                 NSLog("[BridgePad] Handshake missing fields")
+                return
+            }
+
+            // Only the paired phone, or a device the user is actively pairing,
+            // may establish a session. Without this any host on the LAN could
+            // hand us a key and start receiving OTPs.
+            guard pairingManager.shouldAcceptHandshake(publicKeyData: publicKeyData) else {
+                NSLog("[BridgePad] Handshake refused — closing connection")
+                connection?.cancel()
+                connection = nil
+                isConnected = false
                 return
             }
 

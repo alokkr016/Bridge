@@ -59,15 +59,25 @@ struct PairingView: View {
             }
         }
         .onAppear(perform: refresh)
+        .onDisappear {
+            // Close the pairing window's trust exception when the sheet goes away.
+            PairingManager.shared.endPairingMode()
+        }
         .onReceive(Timer.publish(every: 1, on: .main, in: .common).autoconnect()) { _ in
             // Flip to the success state as soon as the handshake lands.
             let paired = PairingManager.shared.isPaired()
-            if paired != isPaired { isPaired = paired }
+            if paired != isPaired {
+                isPaired = paired
+                // Paired — stop accepting new devices.
+                if paired { PairingManager.shared.endPairingMode() }
+            }
         }
     }
 
     private func refresh() {
         isPaired = PairingManager.shared.isPaired()
+        // Opens the only window in which an unknown device may pair.
+        PairingManager.shared.beginPairingMode()
         TCPServer.shared.start()
         if let url = PairingManager.shared.getPairingURL() {
             qr = QRCodeGenerator.generate(from: url)
