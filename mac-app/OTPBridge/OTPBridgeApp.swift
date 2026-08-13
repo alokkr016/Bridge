@@ -22,6 +22,7 @@ struct OTPBridgeApp: App {
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var pairingWindow: NSWindow?
     private var dashboardWindow: NSWindow?
+    private var settingsWindow: NSWindow?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NotificationManager.shared.requestPermission()
@@ -35,6 +36,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             self,
             selector: #selector(handleOpenDashboard),
             name: openDashboardNotification,
+            object: nil
+        )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleOpenSettings),
+            name: openSettingsNotification,
             object: nil
         )
         registerLoginItem()
@@ -116,6 +123,30 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             window.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)
             self?.dashboardWindow = window
+        }
+    }
+
+    @objc func handleOpenSettings() {
+        DispatchQueue.main.async { [weak self] in
+            if let existing = self?.settingsWindow, existing.isVisible {
+                existing.makeKeyAndOrderFront(nil)
+                NSApp.activate(ignoringOtherApps: true)
+                return
+            }
+
+            let window = NSWindow(
+                contentRect: NSRect(x: 0, y: 0, width: 420, height: 460),
+                styleMask: [.titled, .closable],
+                backing: .buffered,
+                defer: false
+            )
+            window.isReleasedWhenClosed = false
+            window.title = "Bridge Settings"
+            window.contentView = NSHostingView(rootView: SettingsWindow())
+            window.center()
+            window.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            self?.settingsWindow = window
         }
     }
 

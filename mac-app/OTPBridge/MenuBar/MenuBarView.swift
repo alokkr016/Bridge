@@ -244,6 +244,10 @@ struct MenuBarView: View {
             Divider().padding(.horizontal, 8).padding(.vertical, 4)
             
             // Section 2: Connection & Updates
+            footerButton(title: "Settings…", icon: "slider.horizontal.3", shortcut: "⌘,") {
+                NotificationCenter.default.post(name: openSettingsNotification, object: nil)
+            }
+
             footerButton(title: "Pair New Device…", icon: "qrcode") {
                 NotificationCenter.default.post(name: openPairingNotification, object: nil)
             }

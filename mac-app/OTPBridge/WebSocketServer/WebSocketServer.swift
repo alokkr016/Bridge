@@ -184,6 +184,10 @@ class WebSocketServer {
                 guard let type = json?["type"] as? String else { return }
 
                 if type == "otp" {
+                    guard FeatureSettings.shared.otpForwardingEnabled else {
+                        NSLog("[OTPBridge] OTP received but forwarding is disabled — ignoring")
+                        return
+                    }
                     let sender = json?["sender"] as? String ?? "Unknown"
                     let otp = json?["otp"] as? String ?? ""
                     let company = json?["company"] as? String
@@ -195,6 +199,10 @@ class WebSocketServer {
                         self.onOTPReceived?(sender, otp, company, timestamp)
                     }
                 } else if type == "clipboard" {
+                    guard FeatureSettings.shared.clipboardSyncEnabled else {
+                        NSLog("[OTPBridge] Clipboard received but sync is disabled — ignoring")
+                        return
+                    }
                     if let text = json?["text"] as? String {
                         NSLog("[OTPBridge] Clipboard received from Android")
                         DispatchQueue.main.async {
@@ -202,6 +210,10 @@ class WebSocketServer {
                         }
                     }
                 } else if type == "call" {
+                    guard FeatureSettings.shared.callHandlingEnabled else {
+                        NSLog("[OTPBridge] Call event received but call handling is disabled — ignoring")
+                        return
+                    }
                     let state = json?["state"] as? String ?? "idle"
                     let number = json?["number"] as? String ?? ""
                     let name = json?["name"] as? String
@@ -258,7 +270,8 @@ class WebSocketServer {
 
             DispatchQueue.main.async {
                 self.onHandshakeReceived?(deviceId, publicKeyData)
-                ClipboardManager.shared.startSyncing()
+                // Honours the clipboard-sync setting instead of always starting.
+                FeatureSettings.shared.applyClipboardState()
             }
             NSLog("[OTPBridge] Connection established!")
         } catch {
@@ -285,6 +298,7 @@ class WebSocketServer {
     }
 
     func sendCallControl(_ action: String) {
+        guard FeatureSettings.shared.callHandlingEnabled else { return }
         guard let secret = sharedSecret else { return }
         do {
             let payload = try JSONSerialization.data(withJSONObject: ["type": "call_control", "action": action])
@@ -297,6 +311,7 @@ class WebSocketServer {
     }
 
     func sendClipboard(_ text: String) {
+        guard FeatureSettings.shared.clipboardSyncEnabled else { return }
         guard let secret = sharedSecret else { return }
         do {
             let payload = try JSONSerialization.data(withJSONObject: ["type": "clipboard", "text": text])
