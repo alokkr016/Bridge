@@ -61,6 +61,30 @@
             android:taskAffinity=""
             android:finishOnTaskLaunch="true" />
 
+        <!-- "Send to Bridge" on the text-selection toolbar and the share sheet.
+             The selection arrives in the Intent, so no clipboard access (and
+             hence no window focus) is needed. -->
+        <activity
+            android:name=".clipboard.SendSelectionActivity"
+            android:exported="true"
+            android:label="@string/send_to_bridge"
+            android:theme="@style/Theme.OTPBridge.Invisible"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:finishOnTaskLaunch="true">
+            <intent-filter>
+                <action android:name="android.intent.action.PROCESS_TEXT" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
+
         <!-- Quick Settings tile: one pull-down + tap sends the clipboard. -->
         <service
             android:name=".clipboard.ClipboardTileService"

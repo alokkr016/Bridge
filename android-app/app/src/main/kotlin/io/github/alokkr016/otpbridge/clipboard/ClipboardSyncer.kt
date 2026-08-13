@@ -27,6 +27,27 @@ object ClipboardSyncer {
     }
 
     /**
+     * Sends text handed to us directly (e.g. the selection from an
+     * ACTION_PROCESS_TEXT toolbar item), bypassing the clipboard entirely.
+     *
+     * Unlike syncNow this needs no window focus and applies no de-dupe: the
+     * user explicitly asked for *this* selection to go, so sending the same
+     * string twice is a legitimate request rather than an echo.
+     *
+     * @return true if something was sent.
+     */
+    fun sendText(context: Context, text: String?): Boolean {
+        val trimmed = text?.takeIf { it.isNotBlank() } ?: run {
+            Log.d(TAG, "No text supplied — nothing to send")
+            return false
+        }
+        lastSyncedClip = trimmed
+        Log.d(TAG, "Selection → Mac: ${trimmed.take(40)}")
+        WebSocketClient.getInstance(context).sendClipboard(trimmed)
+        return true
+    }
+
+    /**
      * Reads the current clip and sends it if it is new.
      * @return true if something was sent.
      */
