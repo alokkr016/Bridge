@@ -14,14 +14,15 @@
 		PAD00000000000000000000A /* QRCodeGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = PAD000000000000000000009 /* QRCodeGenerator.swift */; };
 		PAD00000000000000000000C /* LocalAddress.swift in Sources */ = {isa = PBXBuildFile; fileRef = PAD00000000000000000000B /* LocalAddress.swift */; };
 		PAD00000000000000000000E /* TCPServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = PAD00000000000000000000D /* TCPServer.swift */; };
-		PAD000000000000000000010 /* BLECentral.swift in Sources */ = {isa = PBXBuildFile; fileRef = PAD00000000000000000000F /* BLECentral.swift */; };
-		PAD000000000000000000012 /* ClipboardManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = PAD000000000000000000011 /* ClipboardManager.swift */; };
-		PAD000000000000000000014 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = PAD000000000000000000013 /* NotificationManager.swift */; };
-		PAD000000000000000000016 /* OTPStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = PAD000000000000000000015 /* OTPStore.swift */; };
-		PAD000000000000000000018 /* Brand.swift in Sources */ = {isa = PBXBuildFile; fileRef = PAD000000000000000000017 /* Brand.swift */; };
-		PAD00000000000000000001A /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = PAD000000000000000000019 /* HomeView.swift */; };
-		PAD00000000000000000001C /* PairingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = PAD00000000000000000001B /* PairingView.swift */; };
-		PAD00000000000000000001E /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = PAD00000000000000000001D /* SettingsView.swift */; };
+		PAD000000000000000000010 /* LanBeacon.swift in Sources */ = {isa = PBXBuildFile; fileRef = PAD00000000000000000000F /* LanBeacon.swift */; };
+		PAD000000000000000000012 /* BLECentral.swift in Sources */ = {isa = PBXBuildFile; fileRef = PAD000000000000000000011 /* BLECentral.swift */; };
+		PAD000000000000000000014 /* ClipboardManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = PAD000000000000000000013 /* ClipboardManager.swift */; };
+		PAD000000000000000000016 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = PAD000000000000000000015 /* NotificationManager.swift */; };
+		PAD000000000000000000018 /* OTPStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = PAD000000000000000000017 /* OTPStore.swift */; };
+		PAD00000000000000000001A /* Brand.swift in Sources */ = {isa = PBXBuildFile; fileRef = PAD000000000000000000019 /* Brand.swift */; };
+		PAD00000000000000000001C /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = PAD00000000000000000001B /* HomeView.swift */; };
+		PAD00000000000000000001E /* PairingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = PAD00000000000000000001D /* PairingView.swift */; };
+		PAD000000000000000000020 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = PAD00000000000000000001F /* SettingsView.swift */; };
 		PAD000000000000000000385 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = PAD000000000000000000384 /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
@@ -33,14 +34,15 @@
 		PAD000000000000000000009 /* QRCodeGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRCodeGenerator.swift; sourceTree = "<group>"; };
 		PAD00000000000000000000B /* LocalAddress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalAddress.swift; sourceTree = "<group>"; };
 		PAD00000000000000000000D /* TCPServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TCPServer.swift; sourceTree = "<group>"; };
-		PAD00000000000000000000F /* BLECentral.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLECentral.swift; sourceTree = "<group>"; };
-		PAD000000000000000000011 /* ClipboardManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardManager.swift; sourceTree = "<group>"; };
-		PAD000000000000000000013 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
-		PAD000000000000000000015 /* OTPStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OTPStore.swift; sourceTree = "<group>"; };
-		PAD000000000000000000017 /* Brand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Brand.swift; sourceTree = "<group>"; };
-		PAD000000000000000000019 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
-		PAD00000000000000000001B /* PairingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairingView.swift; sourceTree = "<group>"; };
-		PAD00000000000000000001D /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		PAD00000000000000000000F /* LanBeacon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanBeacon.swift; sourceTree = "<group>"; };
+		PAD000000000000000000011 /* BLECentral.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLECentral.swift; sourceTree = "<group>"; };
+		PAD000000000000000000013 /* ClipboardManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardManager.swift; sourceTree = "<group>"; };
+		PAD000000000000000000015 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
+		PAD000000000000000000017 /* OTPStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OTPStore.swift; sourceTree = "<group>"; };
+		PAD000000000000000000019 /* Brand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Brand.swift; sourceTree = "<group>"; };
+		PAD00000000000000000001B /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		PAD00000000000000000001D /* PairingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairingView.swift; sourceTree = "<group>"; };
+		PAD00000000000000000001F /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		PAD000000000000000000384 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		PAD000000000000000000386 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		PAD000000000000000000391 /* Bridge.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Bridge.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -114,6 +116,7 @@
 			children = (
 				PAD00000000000000000000B /* LocalAddress.swift */,
 				PAD00000000000000000000D /* TCPServer.swift */,
+				PAD00000000000000000000F /* LanBeacon.swift */,
 			);
 			path = Network;
 			sourceTree = "<group>";
@@ -121,7 +124,7 @@
 		PAD0000000000000000003B9 /* BLE */ = {
 			isa = PBXGroup;
 			children = (
-				PAD00000000000000000000F /* BLECentral.swift */,
+				PAD000000000000000000011 /* BLECentral.swift */,
 			);
 			path = BLE;
 			sourceTree = "<group>";
@@ -129,7 +132,7 @@
 		PAD0000000000000000003BA /* Clipboard */ = {
 			isa = PBXGroup;
 			children = (
-				PAD000000000000000000011 /* ClipboardManager.swift */,
+				PAD000000000000000000013 /* ClipboardManager.swift */,
 			);
 			path = Clipboard;
 			sourceTree = "<group>";
@@ -137,7 +140,7 @@
 		PAD0000000000000000003BB /* Notification */ = {
 			isa = PBXGroup;
 			children = (
-				PAD000000000000000000013 /* NotificationManager.swift */,
+				PAD000000000000000000015 /* NotificationManager.swift */,
 			);
 			path = Notification;
 			sourceTree = "<group>";
@@ -145,7 +148,7 @@
 		PAD0000000000000000003BC /* Storage */ = {
 			isa = PBXGroup;
 			children = (
-				PAD000000000000000000015 /* OTPStore.swift */,
+				PAD000000000000000000017 /* OTPStore.swift */,
 			);
 			path = Storage;
 			sourceTree = "<group>";
@@ -153,10 +156,10 @@
 		PAD0000000000000000003BD /* UI */ = {
 			isa = PBXGroup;
 			children = (
-				PAD000000000000000000017 /* Brand.swift */,
-				PAD000000000000000000019 /* HomeView.swift */,
-				PAD00000000000000000001B /* PairingView.swift */,
-				PAD00000000000000000001D /* SettingsView.swift */,
+				PAD000000000000000000019 /* Brand.swift */,
+				PAD00000000000000000001B /* HomeView.swift */,
+				PAD00000000000000000001D /* PairingView.swift */,
+				PAD00000000000000000001F /* SettingsView.swift */,
 			);
 			path = UI;
 			sourceTree = "<group>";
@@ -236,14 +239,15 @@
 				PAD00000000000000000000A /* QRCodeGenerator.swift in Sources */,
 				PAD00000000000000000000C /* LocalAddress.swift in Sources */,
 				PAD00000000000000000000E /* TCPServer.swift in Sources */,
-				PAD000000000000000000010 /* BLECentral.swift in Sources */,
-				PAD000000000000000000012 /* ClipboardManager.swift in Sources */,
-				PAD000000000000000000014 /* NotificationManager.swift in Sources */,
-				PAD000000000000000000016 /* OTPStore.swift in Sources */,
-				PAD000000000000000000018 /* Brand.swift in Sources */,
-				PAD00000000000000000001A /* HomeView.swift in Sources */,
-				PAD00000000000000000001C /* PairingView.swift in Sources */,
-				PAD00000000000000000001E /* SettingsView.swift in Sources */,
+				PAD000000000000000000010 /* LanBeacon.swift in Sources */,
+				PAD000000000000000000012 /* BLECentral.swift in Sources */,
+				PAD000000000000000000014 /* ClipboardManager.swift in Sources */,
+				PAD000000000000000000016 /* NotificationManager.swift in Sources */,
+				PAD000000000000000000018 /* OTPStore.swift in Sources */,
+				PAD00000000000000000001A /* Brand.swift in Sources */,
+				PAD00000000000000000001C /* HomeView.swift in Sources */,
+				PAD00000000000000000001E /* PairingView.swift in Sources */,
+				PAD000000000000000000020 /* SettingsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

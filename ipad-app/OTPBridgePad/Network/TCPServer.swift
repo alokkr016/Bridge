@@ -25,10 +25,23 @@ final class TCPServer {
     var onHandshakeReceived: ((String, Data) -> Void)?
     var onConnectionChanged: ((Bool) -> Void)?
 
+    /// Posted on connect/disconnect. A Notification rather than only the
+    /// single-assignment `onConnectionChanged` closure, so several observers
+    /// (HomeView and LanBeacon) can react without overwriting each other.
+    static let connectionChanged = Notification.Name("bridgePadConnectionChanged")
+
     private(set) var isConnected = false {
         didSet {
             guard oldValue != isConnected else { return }
-            DispatchQueue.main.async { self.onConnectionChanged?(self.isConnected) }
+            let connected = isConnected
+            DispatchQueue.main.async {
+                self.onConnectionChanged?(connected)
+                NotificationCenter.default.post(
+                    name: Self.connectionChanged,
+                    object: nil,
+                    userInfo: ["connected": connected]
+                )
+            }
         }
     }
 

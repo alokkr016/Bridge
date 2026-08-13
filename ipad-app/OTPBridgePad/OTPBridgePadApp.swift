@@ -22,9 +22,17 @@ struct OTPBridgePadApp: App {
                         // NWListener may have been suspended in the background.
                         TCPServer.shared.start()
                         UIApplication.shared.isIdleTimerDisabled = true
+                        // Announce our IP only while nothing is connected — the
+                        // phone only listens for this when it's hunting an IP.
+                        if !TCPServer.shared.isConnected {
+                            LanBeacon.shared.start()
+                        }
                     case .background, .inactive:
                         // Deliberately leave BLE central running — it is the
                         // background delivery path. Do not tear it down.
+                        // The beacon, however, is pointless in the background:
+                        // iPadOS suspends our sockets, so stop burning the timer.
+                        LanBeacon.shared.stop()
                         UIApplication.shared.isIdleTimerDisabled = false
                     @unknown default:
                         break
@@ -42,6 +50,24 @@ struct OTPBridgePadApp: App {
 
         TCPServer.shared.onClipboardReceived = { text in
             ClipboardManager.shared.receiveFromPhone(text)
+        }
+
+        // The beacon exists purely to be found. Once a phone is connected there
+        // is nothing to announce; if it drops, start announcing again so the
+        // phone can recover a changed IP without re-pairing.
+        // Observes the notification rather than assigning onConnectionChanged,
+        // which HomeView also owns.
+        NotificationCenter.default.addObserver(
+            forName: TCPServer.connectionChanged,
+            object: nil,
+            queue: .main
+        ) { note in
+            let connected = note.userInfo?["connected"] as? Bool ?? false
+            if connected {
+                LanBeacon.shared.stop()
+            } else {
+                LanBeacon.shared.start()
+            }
         }
 
         BLECentral.shared.onOTPPayload = { json in
