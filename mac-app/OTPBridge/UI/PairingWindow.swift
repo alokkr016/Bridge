@@ -6,6 +6,8 @@ struct PairingWindow: View {
     @State private var isListening = false
     @State private var isConnected = false
     @State private var pairedDeviceId: String?
+    @State private var hostWindow: NSWindow?
+    @State private var pollTimer: Timer?
 
     var body: some View {
         VStack(spacing: 24) {
@@ -72,24 +74,32 @@ struct PairingWindow: View {
                 }
             }
 
-            Button(action: startPairing) {
+            Button(action: primaryAction) {
                 Label(isConnected ? "Done" : (isListening ? "Listening..." : "Start Pairing"), systemImage: isConnected ? "checkmark" : "antenna.radiowaves.left.and.right")
                     .frame(maxWidth: .infinity)
             }
             .controlSize(.large)
+            .keyboardShortcut(.defaultAction)
             .disabled(isListening && !isConnected)
         }
         .padding(40)
         .frame(width: 400, height: 520)
-        .onAppear {
+        .background(WindowAccessor { window in self.hostWindow = window })
+        .onAppear(perform: startPairing)
+        .onDisappear {
+            pollTimer?.invalidate()
+            pollTimer = nil
+        }
+    }
+
+    /// Once paired the button becomes "Done" and its job is to dismiss.
+    private func primaryAction() {
+        if isConnected {
+            pollTimer?.invalidate()
+            pollTimer = nil
+            hostWindow?.close()
+        } else {
             startPairing()
-            Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
-                if WebSocketServer.shared.isConnected && !self.isConnected {
-                    DispatchQueue.main.async {
-                        self.isConnected = true
-                    }
-                }
-            }
         }
     }
 
@@ -104,10 +114,41 @@ struct PairingWindow: View {
             DispatchQueue.main.async {
                 self.isConnected = true
                 self.pairedDeviceId = deviceId
+                self.pollTimer?.invalidate()
+                self.pollTimer = nil
             }
         }
 
         WebSocketServer.shared.start()
         isListening = true
+
+        // Fallback for a handshake that landed before this window opened.
+        // Invalidated on connect and in onDisappear so it can't outlive the view.
+        pollTimer?.invalidate()
+        pollTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { timer in
+            if WebSocketServer.shared.isConnected {
+                DispatchQueue.main.async {
+                    self.isConnected = true
+                    timer.invalidate()
+                    if self.pollTimer === timer { self.pollTimer = nil }
+                }
+            }
+        }
+    }
+}
+
+/// Reaches the NSWindow hosting this SwiftUI view so it can close itself
+/// without the view needing a reference to the AppDelegate.
+private struct WindowAccessor: NSViewRepresentable {
+    let onResolve: (NSWindow?) -> Void
+
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        DispatchQueue.main.async { onResolve(view.window) }
+        return view
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {
+        DispatchQueue.main.async { onResolve(nsView.window) }
     }
 }
