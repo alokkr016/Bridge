@@ -21,6 +21,7 @@ import io.github.alokkr016.otpbridge.R
 import io.github.alokkr016.otpbridge.notification.NotificationHelper
 import io.github.alokkr016.otpbridge.call.CallController
 import io.github.alokkr016.otpbridge.clipboard.ClipboardRelayActivity
+import io.github.alokkr016.otpbridge.clipboard.ClipboardTileService
 import io.github.alokkr016.otpbridge.pairing.BLEScanner
 import io.github.alokkr016.otpbridge.websocket.WebSocketClient
 
@@ -87,6 +88,10 @@ class BridgeForegroundService : Service() {
             callController.handleControl(action)
         }
         callController.start()
+
+        // Ask SystemUI to bind the QS tile so it has a live state and reliably
+        // delivers taps even when this process has been idle.
+        ClipboardTileService.requestListening(this)
 
         webSocketClient.connect()
 
