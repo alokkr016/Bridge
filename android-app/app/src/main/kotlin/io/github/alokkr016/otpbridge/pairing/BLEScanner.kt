@@ -239,19 +239,11 @@ class BLEScanner(private val context: Context) {
     }
 
     private fun applyIP(newIP: String) {
-        val device = keyPairStore.getPairedDevice() ?: return
-        if (device.ip == newIP) {
-            Log.d(TAG, "IP unchanged ($newIP), no update needed")
+        val updated = keyPairStore.applyDiscoveredIp(newIP) ?: run {
+            Log.d(TAG, "IP $newIP already known or ambiguous with multiple peers")
             return
         }
-        Log.d(TAG, "Updating Mac IP: ${device.ip} → $newIP")
-        keyPairStore.savePairedDevice(
-            deviceId = device.deviceId,
-            publicKey = device.publicKey,
-            ip = newIP,
-            port = device.port,
-            sharedSecret = device.sharedSecret
-        )
+        Log.d(TAG, "Updating peer ${updated.deviceId.take(8)} IP → $newIP")
         watching = false
         handler.removeCallbacksAndMessages(null)
         handler.post { onIPDiscovered?.invoke(newIP) }

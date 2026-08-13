@@ -29,7 +29,7 @@ class BridgeForegroundService : Service() {
 
     companion object {
         private const val TAG = "BridgeForegroundService"
-        const val CHANNEL_ID = "otp_bridge_channel"
+        const val CHANNEL_ID = NotificationHelper.CHANNEL_ID
         const val NOTIFICATION_ID = 1002
     }
 
@@ -163,7 +163,7 @@ class BridgeForegroundService : Service() {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setSmallIcon(R.drawable.ic_stat_infinity)
             .setContentTitle("Bridge")
             .setContentText("Running in background")
             .setContentIntent(pendingIntent)

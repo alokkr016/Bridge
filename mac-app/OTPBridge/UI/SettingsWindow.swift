@@ -7,7 +7,10 @@ let openSettingsNotification = Notification.Name("openSettings")
 struct SettingsWindow: View {
 
     @ObservedObject private var settings = FeatureSettings.shared
+    @ObservedObject private var updater = UpdaterManager.shared
     @State private var chimeEnabled = SoundManager.shared.isEnabled
+    @State private var confirmForget = false
+    @State private var confirmClear = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -19,13 +22,33 @@ struct SettingsWindow: View {
                     Divider()
                     alertsSection
                     Divider()
+                    deviceSection
+                    Divider()
+                    updatesSection
+                    Divider()
+                    dangerSection
                     footerNote
                 }
                 .padding(20)
             }
         }
-        .frame(width: 420, height: 460)
+        .frame(width: 420, height: 560)
         .background(Color(NSColor.windowBackgroundColor))
+        .alert("Forget this phone?", isPresented: $confirmForget) {
+            Button("Forget", role: .destructive) {
+                PairingManager.shared.clearPairing()
+                WebSocketServer.shared.stop()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("You’ll need to scan the QR code again to reconnect.")
+        }
+        .alert("Clear OTP history?", isPresented: $confirmClear) {
+            Button("Clear", role: .destructive) {
+                StorageManager.shared.clearAllOTPs()
+            }
+            Button("Cancel", role: .cancel) {}
+        }
     }
 
     private var header: some View {
@@ -85,6 +108,76 @@ struct SettingsWindow: View {
                 )
             )
         }
+    }
+
+    private var deviceSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            sectionTitle("Device")
+            settingsButton(title: "Connection Dashboard", icon: "network") {
+                NotificationCenter.default.post(name: openDashboardNotification, object: nil)
+            }
+            settingsButton(title: "Pair New Device…", icon: "qrcode") {
+                NotificationCenter.default.post(name: openPairingNotification, object: nil)
+            }
+        }
+    }
+
+    private var updatesSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            sectionTitle("Updates")
+            if updater.updateAvailable {
+                settingsButton(
+                    title: updater.isDownloading ? "Downloading…" : "Install Update (\(updater.latestVersion))",
+                    icon: "arrow.down.circle"
+                ) {
+                    updater.downloadAndInstallUpdate()
+                }
+                .disabled(updater.isDownloading)
+            } else {
+                settingsButton(
+                    title: updater.isChecking ? "Checking…" : (updater.statusMessage.isEmpty ? "Check for Updates" : updater.statusMessage),
+                    icon: "arrow.triangle.2.circlepath"
+                ) {
+                    updater.checkForUpdates(manually: true)
+                }
+                .disabled(updater.isChecking)
+            }
+            Text("v\(UpdaterManager.currentVersion)")
+                .font(.system(size: 11))
+                .foregroundStyle(.tertiary)
+        }
+    }
+
+    private var dangerSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            sectionTitle("Danger zone")
+            if PairingManager.shared.isPaired() {
+                settingsButton(title: "Forget Device", icon: "minus.circle", destructive: true) {
+                    confirmForget = true
+                }
+            }
+            settingsButton(title: "Clear History", icon: "trash", destructive: true) {
+                confirmClear = true
+            }
+        }
+    }
+
+    private func settingsButton(title: String, icon: String, destructive: Bool = false, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 8) {
+                Image(systemName: icon)
+                    .font(.system(size: 12))
+                    .foregroundStyle(destructive ? .red : .secondary)
+                    .frame(width: 16)
+                Text(title)
+                    .font(.system(size: 13))
+                    .foregroundStyle(destructive ? .red : .primary)
+                Spacer()
+            }
+            .padding(.vertical, 4)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 
     private var footerNote: some View {

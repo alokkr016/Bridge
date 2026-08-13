@@ -29,6 +29,7 @@
 		AA000023 /* IncomingCallWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000123 /* IncomingCallWindow.swift */; };
 		AA000024 /* SettingsWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000124 /* SettingsWindow.swift */; };
 		AA000025 /* FeatureSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000125 /* FeatureSettings.swift */; };
+		AA000026 /* Brand.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000126 /* Brand.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -54,6 +55,7 @@
 		AA000123 /* IncomingCallWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IncomingCallWindow.swift; sourceTree = "<group>"; };
 		AA000124 /* SettingsWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsWindow.swift; sourceTree = "<group>"; };
 		AA000125 /* FeatureSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureSettings.swift; sourceTree = "<group>"; };
+		AA000126 /* Brand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Brand.swift; sourceTree = "<group>"; };
 		AA000200 /* Bridge.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Bridge.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -188,6 +190,7 @@
 				AA000119 /* ConnectionDashboard.swift */,
 				AA000123 /* IncomingCallWindow.swift */,
 				AA000124 /* SettingsWindow.swift */,
+				AA000126 /* Brand.swift */,
 			);
 			path = UI;
 			sourceTree = "<group>";
@@ -308,6 +311,7 @@
 				AA000023 /* IncomingCallWindow.swift in Sources */,
 				AA000024 /* SettingsWindow.swift in Sources */,
 				AA000025 /* FeatureSettings.swift in Sources */,
+				AA000026 /* Brand.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
