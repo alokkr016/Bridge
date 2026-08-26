@@ -35,12 +35,17 @@ enum LocalAddress {
         return en0 ?? other ?? en0LinkLocal ?? otherLinkLocal
     }
 
-    /// Compact BLE local name: `B` + 8 hex digits of the IPv4 (e.g. 192.168.0.108 → BC0A8006C).
-    /// CoreBluetooth cannot put manufacturer data in advertisements, so the name carries the IP.
-    static func bleName(for ip: String) -> String {
+    /// Compact BLE local name: `B` + 8 hex digits of IPv4 + 8 hex of device id.
+    /// Example: 192.168.0.108 / 3A8D8464-… → BC0A8006C3A8D8464
+    static func bleName(for ip: String, deviceId: String? = nil) -> String {
         let parts = ip.split(separator: ".").compactMap { UInt8($0) }
         guard parts.count == 4 else { return "Bridge" }
-        return "B" + parts.map { String(format: "%02X", $0) }.joined()
+        var name = "B" + parts.map { String(format: "%02X", $0) }.joined()
+        if let id = deviceId {
+            let hex = id.replacingOccurrences(of: "-", with: "").prefix(8)
+            if hex.count == 8 { name += hex.uppercased() }
+        }
+        return name
     }
 }
 
@@ -119,7 +124,7 @@ class BLEAdvertiser: NSObject {
     fileprivate func beginAdvertising() {
         guard let manager, manager.state == .poweredOn else { return }
         let ip = LocalAddress.ipv4() ?? "0.0.0.0"
-        let name = LocalAddress.bleName(for: ip)
+        let name = LocalAddress.bleName(for: ip, deviceId: CryptoManager.shared.getDeviceId())
         manager.stopAdvertising()
         manager.startAdvertising([
             CBAdvertisementDataLocalNameKey: name,
@@ -157,7 +162,8 @@ extension BLEAdvertiser: CBPeripheralManagerDelegate {
             return
         }
         let ip = LocalAddress.ipv4() ?? "0.0.0.0"
-        let data = Data(ip.utf8)
+        let payload = "OTPBRIDGE \(ip) 8420 \(CryptoManager.shared.getDeviceId())"
+        let data = Data(payload.utf8)
         guard request.offset <= data.count else {
             peripheral.respond(to: request, withResult: .invalidOffset)
             return
@@ -195,7 +201,7 @@ final class LanBeacon {
 
     private func send() {
         guard let ip = LocalAddress.ipv4() else { return }
-        let payload = "OTPBRIDGE \(ip) 8420"
+        let payload = "OTPBRIDGE \(ip) 8420 \(CryptoManager.shared.getDeviceId())"
         guard let data = payload.data(using: .utf8) else { return }
         // Global broadcast + /24 directed broadcast (some APs drop 255.255.255.255).
         send(data, to: "255.255.255.255")

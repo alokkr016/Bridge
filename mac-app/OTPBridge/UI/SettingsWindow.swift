@@ -11,6 +11,7 @@ struct SettingsWindow: View {
     @State private var chimeEnabled = SoundManager.shared.isEnabled
     @State private var confirmForget = false
     @State private var confirmClear = false
+    @State private var showPairing = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -34,6 +35,9 @@ struct SettingsWindow: View {
         }
         .frame(width: 420, height: 560)
         .background(Color(NSColor.windowBackgroundColor))
+        .sheet(isPresented: $showPairing) {
+            PairingWindow()
+        }
         .alert("Forget this phone?", isPresented: $confirmForget) {
             Button("Forget", role: .destructive) {
                 PairingManager.shared.clearPairing()
@@ -117,7 +121,7 @@ struct SettingsWindow: View {
                 NotificationCenter.default.post(name: openDashboardNotification, object: nil)
             }
             settingsButton(title: "Pair New Device…", icon: "qrcode") {
-                NotificationCenter.default.post(name: openPairingNotification, object: nil)
+                showPairing = true
             }
         }
     }

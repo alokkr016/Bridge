@@ -39,6 +39,7 @@ import kotlinx.coroutines.delay
 fun MainScreen(viewModel: MainViewModel = viewModel()) {
     val isPaired by viewModel.isPaired.collectAsState()
     val isConnected by viewModel.isConnected.collectAsState()
+    val needsRePair by viewModel.needsRePair.collectAsState()
     val pairedDevices by viewModel.pairedDevices.collectAsState()
     val recentOTPs by viewModel.recentOTPs.collectAsState()
     var showPairing by remember { mutableStateOf(false) }
@@ -53,8 +54,8 @@ fun MainScreen(viewModel: MainViewModel = viewModel()) {
 
     if (showPairing) {
         PairingScreen(
-            onPaired = { deviceId, publicKey, ip, port ->
-                viewModel.completePairing(deviceId, publicKey, ip, port)
+            onPaired = { deviceId, publicKey, ip, port, displayName, kind, pairingToken ->
+                viewModel.completePairing(deviceId, publicKey, ip, port, displayName, kind, pairingToken)
                 showPairing = false
             },
             onDismiss = { showPairing = false }
@@ -127,10 +128,12 @@ fun MainScreen(viewModel: MainViewModel = viewModel()) {
                         .fillMaxSize()
                         .padding(padding),
                     isConnected = isConnected,
+                    needsRePair = needsRePair,
                     recentOTPs = recentOTPs,
                     copiedOtp = copiedOtp,
                     onCopy = ::copyOtp,
-                    onReconnect = { viewModel.connectToMac() }
+                    onReconnect = { viewModel.connectToMac() },
+                    onRePair = { showPairing = true }
                 )
             }
         }
@@ -221,10 +224,12 @@ private fun UnpairedHome(modifier: Modifier, onPair: () -> Unit) {
 private fun PairedHome(
     modifier: Modifier,
     isConnected: Boolean,
+    needsRePair: Boolean,
     recentOTPs: List<OTPEntity>,
     copiedOtp: String?,
     onCopy: (String) -> Unit,
-    onReconnect: () -> Unit
+    onReconnect: () -> Unit,
+    onRePair: () -> Unit
 ) {
     val latest = recentOTPs.firstOrNull()
     val rest = recentOTPs.drop(1).take(2)
@@ -236,7 +241,11 @@ private fun PairedHome(
     ) {
         if (!isConnected) {
             item {
-                OfflineBanner(onReconnect = onReconnect)
+                OfflineBanner(
+                    needsRePair = needsRePair,
+                    onReconnect = onReconnect,
+                    onRePair = onRePair
+                )
             }
         }
 
@@ -278,7 +287,11 @@ private fun PairedHome(
 }
 
 @Composable
-private fun OfflineBanner(onReconnect: () -> Unit) {
+private fun OfflineBanner(
+    needsRePair: Boolean,
+    onReconnect: () -> Unit,
+    onRePair: () -> Unit
+) {
     Surface(
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.error.copy(alpha = 0.12f)
@@ -296,17 +309,25 @@ private fun OfflineBanner(onReconnect: () -> Unit) {
             )
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
-                Text("Mac is offline", fontWeight = FontWeight.SemiBold)
                 Text(
-                    "Same Wi-Fi? Tap to reconnect.",
+                    if (needsRePair) "Re-pair required" else "Mac is offline",
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    if (needsRePair) "Mac key changed after restart. Scan the QR again."
+                    else "Phone can see the Mac, but the session is not live.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            FilledTonalButton(onClick = onReconnect) {
-                Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
+            FilledTonalButton(onClick = if (needsRePair) onRePair else onReconnect) {
+                Icon(
+                    if (needsRePair) Icons.Default.QrCodeScanner else Icons.Default.Refresh,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp)
+                )
                 Spacer(Modifier.width(6.dp))
-                Text("Retry")
+                Text(if (needsRePair) "Pair" else "Retry")
             }
         }
     }

@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct SettingsView: View {
 
@@ -8,6 +9,11 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             List {
+                Section("This iPad") {
+                    LabeledContent("Name", value: UIDevice.current.name)
+                    LabeledContent("Address", value: LocalAddress.ipv4() ?? "—")
+                }
+
                 Section("Paired phone") {
                     if let device = PairingManager.shared.getPairedDevice() {
                         LabeledContent("Device", value: String(device.deviceId.prefix(8)) + "…")
@@ -15,7 +21,6 @@ struct SettingsView: View {
                     } else {
                         Text("Not paired").foregroundStyle(.secondary)
                     }
-                    LabeledContent("This iPad", value: LocalAddress.ipv4() ?? "—")
                 }
 
                 Section("Staying connected") {

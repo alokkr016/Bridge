@@ -45,9 +45,9 @@ struct HomeView: View {
                 SettingsView()
             }
         }
-        .onAppear {
-            isConnected = TCPServer.shared.isConnected
-            TCPServer.shared.onConnectionChanged = { connected in
+        .onAppear { syncConnection() }
+        .onReceive(NotificationCenter.default.publisher(for: TCPServer.connectionChanged)) { note in
+            if let connected = note.userInfo?["connected"] as? Bool {
                 isConnected = connected
                 if connected { refreshPaired() }
             }
@@ -192,6 +192,11 @@ struct HomeView: View {
 
     private func refreshPaired() {
         isPaired = PairingManager.shared.isPaired()
+    }
+
+    private func syncConnection() {
+        isConnected = TCPServer.shared.isConnected
+        if isConnected { refreshPaired() }
     }
 
     private func relativeTime(_ date: Date) -> String {

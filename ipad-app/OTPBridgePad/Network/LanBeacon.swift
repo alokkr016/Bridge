@@ -79,7 +79,7 @@ final class LanBeacon {
 
     private func send() {
         guard let ip = LocalAddress.ipv4() else { return }
-        let payload = "OTPBRIDGE \(ip) 8420"
+        let payload = "OTPBRIDGE \(ip) 8420 \(CryptoManager.shared.getDeviceId())"
         guard let data = payload.data(using: .utf8) else { return }
         // Global broadcast plus the /24 directed broadcast — some APs drop
         // 255.255.255.255 but forward the directed form.

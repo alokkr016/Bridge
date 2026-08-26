@@ -1,5 +1,7 @@
 import Foundation
 import CryptoKit
+import Security
+import UIKit
 
 class PairingManager {
 
@@ -16,6 +18,7 @@ class PairingManager {
     /// this window, which the user has to open deliberately.
     private(set) var isPairingModeActive = false
     private var pairingModeExpiry: Date?
+    private(set) var pairingToken: String?
 
     private static let pairingWindowDuration: TimeInterval = 300
 
@@ -24,6 +27,7 @@ class PairingManager {
     func beginPairingMode() {
         isPairingModeActive = true
         pairingModeExpiry = Date().addingTimeInterval(Self.pairingWindowDuration)
+        pairingToken = Self.makeToken()
         NSLog("[BridgePad] Pairing mode opened")
     }
 
@@ -31,7 +35,14 @@ class PairingManager {
         guard isPairingModeActive else { return }
         isPairingModeActive = false
         pairingModeExpiry = nil
+        pairingToken = nil
         NSLog("[BridgePad] Pairing mode closed")
+    }
+
+    private static func makeToken() -> String {
+        var bytes = [UInt8](repeating: 0, count: 16)
+        _ = SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
+        return bytes.map { String(format: "%02x", $0) }.joined()
     }
 
     func pairingModeAvailable() -> Bool {
@@ -46,23 +57,33 @@ class PairingManager {
 
     /// Accepts a handshake only from the paired phone, or from any device while
     /// the user is actively pairing. Anything else is refused.
-    func shouldAcceptHandshake(publicKeyData: Data) -> Bool {
+    func shouldAcceptHandshake(publicKeyData: Data, token: String? = nil) -> Bool {
         guard publicKeyData.count == 32 else {
             NSLog("[BridgePad] Rejecting handshake: bad key length \(publicKeyData.count)")
             return false
         }
-        if let known = keyPairStore.getPairedDevice() {
-            if known.publicKey == publicKeyData { return true }
-            if pairingModeAvailable() {
-                NSLog("[BridgePad] Replacing pairing — user is in pairing mode")
-                return true
-            }
-            NSLog("[BridgePad] REJECTED handshake from unknown device (not in pairing mode)")
+        if let known = keyPairStore.getPairedDevice(), known.publicKey == publicKeyData {
+            return true
+        }
+        guard pairingModeAvailable(), let expected = pairingToken, !expected.isEmpty else {
+            NSLog("[BridgePad] REJECTED handshake: unknown device (not a QR scan)")
             return false
         }
-        if pairingModeAvailable() { return true }
-        NSLog("[BridgePad] REJECTED handshake: not paired and not in pairing mode")
-        return false
+        guard let token, token == expected else {
+            NSLog("[BridgePad] REJECTED handshake: missing or wrong pairing token")
+            return false
+        }
+        NSLog("[BridgePad] Accepting new pairing from QR scan")
+        return true
+    }
+
+    func consumePairingToken() {
+        pairingToken = nil
+    }
+
+    func matchesPairingToken(_ token: String?) -> Bool {
+        guard pairingModeAvailable(), let expected = pairingToken, !expected.isEmpty else { return false }
+        return token == expected
     }
 
     func isPaired() -> Bool {
@@ -78,7 +99,16 @@ class PairingManager {
             .replacingOccurrences(of: "+", with: "-")
             .replacingOccurrences(of: "/", with: "_")
             .replacingOccurrences(of: "=", with: "")
-        return "otpbridge://\(deviceId)?pk=\(encodedKey)&ip=\(ip)&port=\(port)"
+        let name = pairingDisplayName()
+        let encodedName = name.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "iPad"
+        if pairingToken == nil { beginPairingMode() }
+        let token = pairingToken ?? ""
+        return "otpbridge://\(deviceId)?pk=\(encodedKey)&ip=\(ip)&port=\(port)&kind=ipad&name=\(encodedName)&token=\(token)"
+    }
+
+    private func pairingDisplayName() -> String {
+        let name = UIDevice.current.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        return name.isEmpty ? "iPad" : name
     }
 
     func completePairing(deviceId: String, publicKeyData: Data) throws -> Bool {

@@ -40,14 +40,27 @@ class BLEScanner(private val context: Context) {
         private const val SCAN_PAUSE_MS = 15_000L
         private const val GATT_TIMEOUT_MS = 8_000L
         private const val UDP_BEACON_PORT = 8421
-        private val ENCODED_NAME = Regex("^B[0-9A-Fa-f]{8}$")
+        private val ENCODED_NAME = Regex("^B[0-9A-Fa-f]{8}([0-9A-Fa-f]{8})?$")
         private val IPV4 = Regex("^((25[0-5]|2[0-4]\\d|[01]?\\d\\d?)\\.){3}(25[0-5]|2[0-4]\\d|[01]?\\d\\d?)$")
+        private val DEVICE_ID = Regex("^[0-9A-Fa-f]{8}(-[0-9A-Fa-f]{4}){3}-[0-9A-Fa-f]{12}$")
 
-        fun decodeBleName(name: String): String? {
+        data class Discovery(val ip: String, val deviceId: String?)
+
+        fun decodeBleName(name: String): Discovery? {
             if (!ENCODED_NAME.matches(name)) return null
-            val bytes = name.substring(1).chunked(2).map { it.toInt(16) }
-            val ip = bytes.joinToString(".")
-            return if (ip != "0.0.0.0" && IPV4.matches(ip)) ip else null
+            val body = name.substring(1)
+            val ipBytes = body.substring(0, 8).chunked(2).map { it.toInt(16) }
+            val ip = ipBytes.joinToString(".")
+            if (ip == "0.0.0.0" || !IPV4.matches(ip)) return null
+            val hint = if (body.length >= 16) body.substring(8, 16) else null
+            return Discovery(ip, hint)
+        }
+
+        fun parseBeacon(text: String): Discovery? {
+            val parts = text.trim().split(Regex("\\s+"))
+            if (parts.size < 3 || parts[0] != "OTPBRIDGE" || !IPV4.matches(parts[1])) return null
+            val id = parts.getOrNull(3)?.takeIf { it.isNotBlank() }
+            return Discovery(parts[1], id)
         }
     }
 
@@ -152,11 +165,11 @@ class BLEScanner(private val context: Context) {
         }
         val names = listOfNotNull(record?.deviceName, deviceName)
         for (name in names) {
-            val ip = decodeBleName(name)
-            if (ip != null) {
-                Log.d(TAG, "Mac IP from BLE name $name → $ip")
+            val found = decodeBleName(name)
+            if (found != null) {
+                Log.d(TAG, "Peer from BLE name $name → ${found.ip} id=${found.deviceId}")
                 stopScan()
-                applyIP(ip)
+                applyIP(found.ip, found.deviceId)
                 return
             }
         }
@@ -233,14 +246,17 @@ class BLEScanner(private val context: Context) {
     }
 
     private fun handleRead(value: ByteArray?) {
-        val ip = value?.toString(Charsets.UTF_8)?.trim().orEmpty()
-        Log.d(TAG, "Mac IP from GATT: $ip")
-        if (IPV4.matches(ip) && ip != "0.0.0.0") applyIP(ip)
+        val text = value?.toString(Charsets.UTF_8)?.trim().orEmpty()
+        val found = parseBeacon(text) ?: run {
+            if (IPV4.matches(text) && text != "0.0.0.0") Discovery(text, null) else null
+        }
+        Log.d(TAG, "GATT read: $text → ${found?.ip} id=${found?.deviceId}")
+        if (found != null) applyIP(found.ip, found.deviceId)
     }
 
-    private fun applyIP(newIP: String) {
-        val updated = keyPairStore.applyDiscoveredIp(newIP) ?: run {
-            Log.d(TAG, "IP $newIP already known or ambiguous with multiple peers")
+    private fun applyIP(newIP: String, deviceId: String?) {
+        val updated = keyPairStore.applyDiscoveredIp(newIP, deviceId) ?: run {
+            Log.d(TAG, "Ignoring discovery $newIP id=$deviceId (no matching peer)")
             return
         }
         Log.d(TAG, "Updating peer ${updated.deviceId.take(8)} IP → $newIP")
@@ -268,9 +284,10 @@ class BLEScanner(private val context: Context) {
                         sock.receive(packet)
                         val text = String(packet.data, 0, packet.length, Charsets.UTF_8).trim()
                         val parts = text.split(Regex("\\s+"))
-                        if (parts.size >= 3 && parts[0] == "OTPBRIDGE" && IPV4.matches(parts[1])) {
-                            Log.d(TAG, "Mac IP from UDP beacon: ${parts[1]} (from ${packet.address.hostAddress})")
-                            handler.post { applyIP(parts[1]) }
+                        val found = parseBeacon(text)
+                        if (found != null) {
+                            Log.d(TAG, "UDP beacon ${found.ip} id=${found.deviceId} from ${packet.address.hostAddress}")
+                            handler.post { applyIP(found.ip, found.deviceId) }
                         }
                     } catch (_: SocketTimeoutException) {
                     }

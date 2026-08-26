@@ -159,13 +159,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
 
             let window = NSWindow(
-                contentRect: NSRect(x: 0, y: 0, width: 420, height: 540),
+                contentRect: NSRect(x: 0, y: 0, width: 380, height: 500),
                 styleMask: [.titled, .closable],
                 backing: .buffered,
                 defer: false
             )
             window.isReleasedWhenClosed = false
-            window.title = "Bridge"
+            window.title = "Pair Phone"
             window.contentView = NSHostingView(rootView: PairingWindow())
             window.center()
             window.makeKeyAndOrderFront(nil)

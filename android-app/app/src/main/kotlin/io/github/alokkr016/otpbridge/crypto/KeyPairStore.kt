@@ -45,14 +45,33 @@ class KeyPairStore(context: Context) {
         return id
     }
 
-    fun savePairedDevice(deviceId: String, publicKey: ByteArray, ip: String, port: Int, sharedSecret: ByteArray) {
+    fun savePairedDevice(
+        deviceId: String,
+        publicKey: ByteArray,
+        ip: String,
+        port: Int,
+        sharedSecret: ByteArray,
+        displayName: String? = null,
+        kind: String? = null,
+        pairingToken: String? = null
+    ) {
         migrateLegacyIfNeeded()
         val devices = getPairedDevices().toMutableList()
-        val updated = PairedDevice(deviceId, publicKey, ip, port, sharedSecret)
         val idx = devices.indexOfFirst { it.deviceId == deviceId }
+        val previous = devices.getOrNull(idx)
+        val updated = PairedDevice(
+            deviceId = deviceId,
+            publicKey = publicKey,
+            ip = ip,
+            port = port,
+            sharedSecret = sharedSecret,
+            displayName = displayName?.takeIf { it.isNotBlank() } ?: previous?.displayName,
+            kind = kind?.takeIf { it.isNotBlank() } ?: previous?.kind,
+            pairingToken = pairingToken?.takeIf { it.isNotBlank() } ?: previous?.pairingToken
+        )
         if (idx >= 0) devices[idx] = updated else devices.add(updated)
         persist(devices)
-        Log.d(TAG, "Saved peer $deviceId @ $ip:$port (total=${devices.size})")
+        Log.d(TAG, "Saved peer ${updated.label} ($deviceId) @ $ip:$port (total=${devices.size})")
     }
 
     fun getPairedDevices(): List<PairedDevice> {
@@ -69,7 +88,10 @@ class KeyPairStore(context: Context) {
                             publicKey = Base64.decode(o.getString("publicKey"), Base64.NO_WRAP),
                             ip = o.getString("ip"),
                             port = o.optInt("port", 8420),
-                            sharedSecret = Base64.decode(o.getString("sharedSecret"), Base64.NO_WRAP)
+                            sharedSecret = Base64.decode(o.getString("sharedSecret"), Base64.NO_WRAP),
+                            displayName = o.optString("displayName").takeIf { it.isNotBlank() },
+                            kind = o.optString("kind").takeIf { it.isNotBlank() },
+                            pairingToken = o.optString("pairingToken").takeIf { it.isNotBlank() }
                         )
                     )
                 }
@@ -99,12 +121,22 @@ class KeyPairStore(context: Context) {
         Log.d(TAG, "Updated IP for $deviceId → $ip")
     }
 
-    /** BLE only gives us an IP. Update the single peer, or the one that already used this IP. */
-    fun applyDiscoveredIp(newIP: String): PairedDevice? {
+    /**
+     * Apply a discovered LAN IP only to the peer that owns [deviceId].
+     * Never rewrite "the only peer" from an anonymous beacon — that used to
+     * point the iPad pairing at the Mac's IP (and vice versa).
+     */
+    fun applyDiscoveredIp(newIP: String, deviceId: String? = null): PairedDevice? {
         val devices = getPairedDevices()
         if (devices.isEmpty()) return null
-        if (devices.any { it.ip == newIP }) return null
-        val target = if (devices.size == 1) devices.first() else return null
+        val id = deviceId?.trim().orEmpty()
+        if (id.isEmpty()) return null
+        val compact = id.replace("-", "")
+        val target = devices.find {
+            it.deviceId.equals(id, ignoreCase = true) ||
+                it.deviceId.replace("-", "").startsWith(compact, ignoreCase = true)
+        } ?: return null
+        if (target.ip == newIP) return null
         updateDeviceIp(target.deviceId, newIP)
         return target.copy(ip = newIP)
     }
@@ -131,6 +163,9 @@ class KeyPairStore(context: Context) {
                     .put("ip", d.ip)
                     .put("port", d.port)
                     .put("sharedSecret", Base64.encodeToString(d.sharedSecret, Base64.NO_WRAP))
+                    .put("displayName", d.displayName ?: "")
+                    .put("kind", d.kind ?: "")
+                    .put("pairingToken", d.pairingToken ?: "")
             )
         }
         prefs.edit()
@@ -171,8 +206,21 @@ data class PairedDevice(
     val publicKey: ByteArray,
     val ip: String,
     val port: Int,
-    val sharedSecret: ByteArray
+    val sharedSecret: ByteArray,
+    val displayName: String? = null,
+    val kind: String? = null,
+    val pairingToken: String? = null
 ) {
+    val kindLabel: String
+        get() = when (kind?.lowercase()) {
+            "mac" -> "Mac"
+            "ipad" -> "iPad"
+            else -> "Computer"
+        }
+
+    val label: String
+        get() = displayName?.takeIf { it.isNotBlank() } ?: "Unnamed $kindLabel"
+
     override fun equals(other: Any?): Boolean =
         other is PairedDevice && other.deviceId == deviceId
 

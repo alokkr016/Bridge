@@ -1,5 +1,6 @@
 import Foundation
 import CryptoKit
+import Security
 
 class PairingManager {
 
@@ -16,6 +17,9 @@ class PairingManager {
     /// this window, which the user has to open deliberately.
     private(set) var isPairingModeActive = false
     private var pairingModeExpiry: Date?
+    /// One-time token embedded in the QR. A reconnect without this token
+    /// cannot complete a *new* pairing, even while the window is open.
+    private(set) var pairingToken: String?
 
     /// How long the window stays open, in case the UI forgets to close it.
     private static let pairingWindowDuration: TimeInterval = 300
@@ -25,6 +29,7 @@ class PairingManager {
     func beginPairingMode() {
         isPairingModeActive = true
         pairingModeExpiry = Date().addingTimeInterval(Self.pairingWindowDuration)
+        pairingToken = Self.makeToken()
         NSLog("[OTPBridge] Pairing mode opened")
     }
 
@@ -32,7 +37,14 @@ class PairingManager {
         guard isPairingModeActive else { return }
         isPairingModeActive = false
         pairingModeExpiry = nil
+        pairingToken = nil
         NSLog("[OTPBridge] Pairing mode closed")
+    }
+
+    private static func makeToken() -> String {
+        var bytes = [UInt8](repeating: 0, count: 16)
+        _ = SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
+        return bytes.map { String(format: "%02x", $0) }.joined()
     }
 
     /// Pairing mode, with its timeout applied.
@@ -51,24 +63,36 @@ class PairingManager {
     /// Accepts when the key matches the stored pairing (the normal reconnect
     /// case), or when the user is actively pairing. Everything else is an
     /// unknown device on the network and is refused.
-    func shouldAcceptHandshake(publicKeyData: Data) -> Bool {
+    func shouldAcceptHandshake(publicKeyData: Data, token: String? = nil) -> Bool {
         guard publicKeyData.count == 32 else {
             NSLog("[OTPBridge] Rejecting handshake: bad key length \(publicKeyData.count)")
             return false
         }
-        if let known = keyPairStore.getPairedDevice() {
-            if known.publicKey == publicKeyData { return true }
-            if pairingModeAvailable() {
-                NSLog("[OTPBridge] Replacing pairing — user is in pairing mode")
-                return true
-            }
-            NSLog("[OTPBridge] REJECTED handshake from unknown device (not in pairing mode)")
+        if let known = keyPairStore.getPairedDevice(), known.publicKey == publicKeyData {
+            return true
+        }
+        // New or replacement pairing requires the token from this QR. Opening
+        // the window is not enough — the already-paired phone reconnects on
+        // its own and used to look like a successful scan.
+        guard pairingModeAvailable(), let expected = pairingToken, !expected.isEmpty else {
+            NSLog("[OTPBridge] REJECTED handshake: unknown device (not a QR scan)")
             return false
         }
-        // No pairing yet: only accept while the user is looking at the QR code.
-        if pairingModeAvailable() { return true }
-        NSLog("[OTPBridge] REJECTED handshake: not paired and not in pairing mode")
-        return false
+        guard let token, token == expected else {
+            NSLog("[OTPBridge] REJECTED handshake: missing or wrong pairing token")
+            return false
+        }
+        NSLog("[OTPBridge] Accepting new pairing from QR scan")
+        return true
+    }
+
+    func consumePairingToken() {
+        pairingToken = nil
+    }
+
+    func matchesPairingToken(_ token: String?) -> Bool {
+        guard pairingModeAvailable(), let expected = pairingToken, !expected.isEmpty else { return false }
+        return token == expected
     }
 
     func isPaired() -> Bool {
@@ -84,7 +108,20 @@ class PairingManager {
             .replacingOccurrences(of: "+", with: "-")
             .replacingOccurrences(of: "/", with: "_")
             .replacingOccurrences(of: "=", with: "")
-        return "otpbridge://\(deviceId)?pk=\(encodedKey)&ip=\(ip)&port=\(port)"
+        let name = pairingDisplayName()
+        let encodedName = name.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "Mac"
+        if pairingToken == nil { beginPairingMode() }
+        let token = pairingToken ?? ""
+        return "otpbridge://\(deviceId)?pk=\(encodedKey)&ip=\(ip)&port=\(port)&kind=mac&name=\(encodedName)&token=\(token)"
+    }
+
+    private func pairingDisplayName() -> String {
+        if let host = Host.current().localizedName, !host.isEmpty { return host }
+        let hostname = ProcessInfo.processInfo.hostName
+        if hostname.hasSuffix(".local") {
+            return String(hostname.dropLast(6))
+        }
+        return hostname.isEmpty ? "Mac" : hostname
     }
 
     func completePairing(deviceId: String, publicKeyData: Data) throws -> Bool {

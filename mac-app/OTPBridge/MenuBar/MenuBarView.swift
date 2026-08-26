@@ -101,7 +101,7 @@ struct MenuBarView: View {
             Image(systemName: "wifi.slash")
                 .font(.system(size: 11))
                 .foregroundStyle(.orange)
-            Text("Phone isn’t connected. Keep both devices on the same Wi-Fi.")
+            Text("Phone isn’t connected. If this persists after a Mac restart, open Pair New Device and scan the QR again.")
                 .font(.system(size: 11))
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)

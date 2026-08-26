@@ -23,6 +23,7 @@ final class TCPServer {
     var onOTPReceived: ((String, String, String?, TimeInterval) -> Void)?
     var onClipboardReceived: ((String) -> Void)?
     var onHandshakeReceived: ((String, Data) -> Void)?
+    var onNewPairingCompleted: ((String, Data) -> Void)?
     var onConnectionChanged: ((Bool) -> Void)?
 
     /// Posted on connect/disconnect. A Notification rather than only the
@@ -56,11 +57,21 @@ final class TCPServer {
     }
 
     func start() {
-        if let existing = listener, existing.state == .ready {
-            NSLog("[BridgePad] Server already listening")
-            return
+        if let existing = listener {
+            switch existing.state {
+            case .ready, .setup, .waiting:
+                NSLog("[BridgePad] Server already listening (\(existing.state))")
+                return
+            default:
+                break
+            }
         }
-        stop(clearSecret: false)
+        // Replace only the listener. Cancelling a live connection here is what
+        // left the UI Offline after the user closed and reopened the app:
+        // scenePhase .active called start() → stop() → handshake torn down
+        // while the phone still thought it was connected.
+        listener?.cancel()
+        listener = nil
 
         do {
             let params = NWParameters.tcp
@@ -133,7 +144,8 @@ final class TCPServer {
             }
             let length = Int(ld[0]) << 24 | Int(ld[1]) << 16 | Int(ld[2]) << 8 | Int(ld[3])
             if length == 0 {
-                // Keepalive ping — keep reading.
+                var pong = Data(count: 4)
+                connection.send(content: pong, completion: .contentProcessed { _ in })
                 self.readLoop(connection: connection)
                 return
             }
@@ -236,7 +248,8 @@ final class TCPServer {
             // Only the paired phone, or a device the user is actively pairing,
             // may establish a session. Without this any host on the LAN could
             // hand us a key and start receiving OTPs.
-            guard pairingManager.shouldAcceptHandshake(publicKeyData: publicKeyData) else {
+            let token = json["token"] as? String
+            guard pairingManager.shouldAcceptHandshake(publicKeyData: publicKeyData, token: token) else {
                 NSLog("[BridgePad] Handshake refused — closing connection")
                 connection?.cancel()
                 connection = nil
@@ -244,7 +257,11 @@ final class TCPServer {
                 return
             }
 
+            let scannedQR = pairingManager.matchesPairingToken(token)
             _ = try pairingManager.completePairing(deviceId: deviceId, publicKeyData: publicKeyData)
+            if scannedQR {
+                pairingManager.consumePairingToken()
+            }
             sharedSecret = try cryptoManager.deriveSharedSecret(theirPublicKeyData: publicKeyData)
 
             let response: [String: Any] = [
@@ -258,6 +275,9 @@ final class TCPServer {
 
             DispatchQueue.main.async {
                 self.onHandshakeReceived?(deviceId, publicKeyData)
+                if scannedQR {
+                    self.onNewPairingCompleted?(deviceId, publicKeyData)
+                }
             }
         } catch {
             NSLog("[BridgePad] Handshake failed: \(error)")

@@ -14,12 +14,25 @@ class CryptoManager {
 
     private func loadOrCreateKeyPair() {
         if let stored = keyPairStore.loadPrivateKey() {
-            self.keyPair = stored
-        } else {
-            let newKey = Curve25519.KeyAgreement.PrivateKey()
-            self.keyPair = newKey
-            keyPairStore.savePrivateKey(newKey)
+            keyPair = stored
+            keyPairStore.ensurePersisted(stored)
+            return
         }
+        if keyPairStore.isPaired() {
+            for _ in 1...6 {
+                Thread.sleep(forTimeInterval: 0.25)
+                if let stored = keyPairStore.loadPrivateKey() {
+                    keyPair = stored
+                    keyPairStore.ensurePersisted(stored)
+                    return
+                }
+            }
+            keyPairStore.clearPairing()
+            keyPairStore.rotateDeviceId()
+        }
+        let newKey = Curve25519.KeyAgreement.PrivateKey()
+        keyPair = newKey
+        keyPairStore.savePrivateKey(newKey)
     }
 
     func getDeviceId() -> String {

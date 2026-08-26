@@ -21,6 +21,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     val isPaired: StateFlow<Boolean> = MutableStateFlow(pairingManager.isPaired())
     val isConnected: StateFlow<Boolean> = MutableStateFlow(false)
+    val needsRePair: StateFlow<Boolean> = MutableStateFlow(false)
     val pairedDevices: StateFlow<List<PairedDevice>> =
         MutableStateFlow(pairingManager.getPairedDevices())
     val recentOTPs: StateFlow<List<OTPEntity>> = otpDao.getRecentOTPs()
@@ -31,6 +32,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         (isConnected as MutableStateFlow).value = webSocketClient.isHandshakeComplete
         webSocketClient.onConnectionChanged = { connected ->
             (isConnected as MutableStateFlow).value = connected
+            (needsRePair as MutableStateFlow).value = webSocketClient.needsRePair
+        }
+        webSocketClient.onPairingRejected = {
+            (needsRePair as MutableStateFlow).value = true
         }
 
         OTNotificationListenerService.onOTPReceived = { otpMessage ->
@@ -53,10 +58,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun completePairing(deviceId: String, publicKey: ByteArray, ip: String, port: Int) {
-        pairingManager.completePairing(deviceId, publicKey, ip, port)
+    fun completePairing(
+        deviceId: String,
+        publicKey: ByteArray,
+        ip: String,
+        port: Int,
+        displayName: String? = null,
+        kind: String? = null,
+        pairingToken: String? = null
+    ) {
+        pairingManager.completePairing(deviceId, publicKey, ip, port, displayName, kind, pairingToken)
         refreshPeers()
-        webSocketClient.connect()
+        webSocketClient.reconnect()
     }
 
     fun disconnect() {

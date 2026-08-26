@@ -15,12 +15,22 @@ class PairingManager(context: Context) {
 
     fun getDeviceId(): String = cryptoManager.getDeviceId()
 
-    fun completePairing(deviceId: String, publicKeyBytes: ByteArray, ip: String, port: Int) {
-        Log.d("PairingManager", "completePairing: deviceId=$deviceId ip=$ip port=$port keyLen=${publicKeyBytes.size}")
+    fun completePairing(
+        deviceId: String,
+        publicKeyBytes: ByteArray,
+        ip: String,
+        port: Int,
+        displayName: String? = null,
+        kind: String? = null,
+        pairingToken: String? = null
+    ) {
+        Log.d("PairingManager", "completePairing: deviceId=$deviceId ip=$ip port=$port name=$displayName kind=$kind")
         val keyPair = cryptoManager.getOrCreateKeyPair()
         val theirPublicKey = cryptoManager.parsePublicKey(publicKeyBytes)
         val sharedSecret = cryptoManager.deriveSharedSecret(keyPair.private, theirPublicKey)
-        keyPairStore.savePairedDevice(deviceId, publicKeyBytes, ip, port, sharedSecret)
+        keyPairStore.savePairedDevice(
+            deviceId, publicKeyBytes, ip, port, sharedSecret, displayName, kind, pairingToken
+        )
         Log.d("PairingManager", "Pairing saved (${keyPairStore.getPairedDevices().size} peers)")
     }
 

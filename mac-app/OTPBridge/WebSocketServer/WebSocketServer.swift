@@ -25,6 +25,8 @@ class WebSocketServer {
 
     var onConnectionChanged: ((Bool) -> Void)?
     var onHandshakeReceived: ((String, Data) -> Void)?
+    /// Fires only when pairing mode accepted a *new* device, not a reconnect.
+    var onNewPairingCompleted: ((String, Data) -> Void)?
 
     private init() {}
 
@@ -118,8 +120,14 @@ class WebSocketServer {
                 return
             }
             let length = Int(ld[0]) << 24 | Int(ld[1]) << 16 | Int(ld[2]) << 8 | Int(ld[3])
-            // length == 0 is a keepalive ping — just loop back and read the next frame
-            if length == 0 { self.readLoop(connection: connection); return }
+            // length == 0 is a keepalive ping — echo it so the phone can
+            // detect a half-open socket after the iPad/Mac app restarts.
+            if length == 0 {
+                var pong = Data(count: 4)
+                connection.send(content: pong, completion: .contentProcessed { _ in })
+                self.readLoop(connection: connection)
+                return
+            }
             guard length < 1_000_000 else {
                 NSLog("[OTPBridge] Invalid length \(length), disconnecting")
                 self.markDisconnected(ifCurrent: connection)
@@ -256,7 +264,8 @@ class WebSocketServer {
             // Only the paired phone, or a device the user is actively pairing,
             // may establish a session. Without this any host on the LAN could
             // hand us a key and start receiving OTPs.
-            guard pairingManager.shouldAcceptHandshake(publicKeyData: publicKeyData) else {
+            let token = json?["token"] as? String
+            guard pairingManager.shouldAcceptHandshake(publicKeyData: publicKeyData, token: token) else {
                 NSLog("[OTPBridge] Handshake refused — closing connection")
                 connection?.cancel()
                 connection = nil
@@ -264,7 +273,11 @@ class WebSocketServer {
                 return
             }
 
+            let scannedQR = pairingManager.matchesPairingToken(token)
             try pairingManager.completePairing(deviceId: deviceId, publicKeyData: publicKeyData)
+            if scannedQR {
+                pairingManager.consumePairingToken()
+            }
             NSLog("[OTPBridge] Pairing saved")
 
             sharedSecret = try cryptoManager.deriveSharedSecret(theirPublicKeyData: publicKeyData)
@@ -283,6 +296,11 @@ class WebSocketServer {
 
             DispatchQueue.main.async {
                 self.onHandshakeReceived?(deviceId, publicKeyData)
+                // A QR token means the user actually scanned, even if this
+                // phone was already stored (re-pair of the same device).
+                if scannedQR {
+                    self.onNewPairingCompleted?(deviceId, publicKeyData)
+                }
                 // Honours the clipboard-sync setting instead of always starting.
                 FeatureSettings.shared.applyClipboardState()
             }

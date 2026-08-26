@@ -45,6 +45,10 @@ class WebSocketClient private constructor(private val context: Context) {
     var onDisconnected: (() -> Unit)? = null
     var onHandshakeComplete: (() -> Unit)? = null
     var onCallControl: ((String) -> Unit)? = null
+    var onPairingRejected: (() -> Unit)? = null
+
+    @Volatile var needsRePair: Boolean = false
+        private set
 
     private val recentlySentOTPs = mutableMapOf<String, Long>()
 
@@ -62,9 +66,10 @@ class WebSocketClient private constructor(private val context: Context) {
             val session = peers.getOrPut(device.deviceId) {
                 PeerSession(device)
             }
-            session.device = device
+            session.applyDevice(device)
             session.ensureConnected()
         }
+        needsRePair = peers.values.any { it.isKeyRejected() }
     }
 
     fun reconnect() {
@@ -150,21 +155,42 @@ class WebSocketClient private constructor(private val context: Context) {
         var handshakeComplete = false
         var isConnected = false
         private var isConnecting = false
+        private var stopping = false
+        private var rejectedPublicKey: ByteArray? = null
         private var reconnectDelay = 1000L
         private var readJob: Job? = null
         private var pingJob: Job? = null
         private var reconnectJob: Job? = null
+        private var connectJob: Job? = null
+        @Volatile private var lastHeardAt = 0L
+
+        fun isKeyRejected(): Boolean =
+            rejectedPublicKey?.contentEquals(device.publicKey) == true
+
+        fun applyDevice(updated: PairedDevice) {
+            if (!updated.publicKey.contentEquals(device.publicKey)) {
+                rejectedPublicKey = null
+            }
+            device = updated
+        }
 
         fun ensureConnected() {
             if (isConnected || isConnecting) return
+            if (rejectedPublicKey?.contentEquals(device.publicKey) == true) {
+                Log.w(TAG, "[${device.deviceId.take(8)}] Skipping — stored key was rejected, re-pair required")
+                return
+            }
             connectOnce()
         }
 
         private fun connectOnce() {
             if (isConnected || isConnecting) return
+            if (rejectedPublicKey?.contentEquals(device.publicKey) == true) return
+            stopping = false
             isConnecting = true
             sharedSecret = device.sharedSecret
-            scope.launch {
+            connectJob?.cancel()
+            connectJob = scope.launch {
                 try {
                     Log.d(TAG, "[${device.deviceId.take(8)}] Connecting to ${device.ip}:${device.port}")
                     val s = Socket()
@@ -177,6 +203,7 @@ class WebSocketClient private constructor(private val context: Context) {
                     isConnected = true
                     isConnecting = false
                     reconnectDelay = 1000L
+                    lastHeardAt = System.currentTimeMillis()
                     sendHandshake()
                     startReading()
                     startPing()
@@ -196,7 +223,8 @@ class WebSocketClient private constructor(private val context: Context) {
                 val rawPubKey = keyPair.public.encoded.takeLast(32).toByteArray()
                 val handshake = HandshakeMessage(
                     deviceId = cryptoManager.getDeviceId(),
-                    publicKey = java.util.Base64.getEncoder().encodeToString(rawPubKey)
+                    publicKey = java.util.Base64.getEncoder().encodeToString(rawPubKey),
+                    token = device.pairingToken
                 )
                 sendFrame(json.encodeToString(handshake).toByteArray())
                 Log.d(TAG, "[${device.deviceId.take(8)}] Handshake sent")
@@ -211,14 +239,17 @@ class WebSocketClient private constructor(private val context: Context) {
                 try {
                     while (isConnected && isActive) {
                         val length = readInt() ?: break
-                        if (length <= 0 || length > 1_000_000) break
+                        lastHeardAt = System.currentTimeMillis()
+                        if (length == 0) continue
+                        if (length < 0 || length > 1_000_000) break
                         val payload = readBytes(length) ?: break
+                        lastHeardAt = System.currentTimeMillis()
                         handlePayload(payload)
                     }
                 } catch (e: Exception) {
                     Log.e(TAG, "[${device.deviceId.take(8)}] Read error: ${e.message}")
                 }
-                if (socket === mySocket) handleDisconnect()
+                if (!stopping && socket === mySocket) handleDisconnect()
             }
         }
 
@@ -273,11 +304,15 @@ class WebSocketClient private constructor(private val context: Context) {
                             Log.e(
                                 TAG,
                                 "[${device.deviceId.take(8)}] REJECTED handshake_ack: " +
-                                    "public key does not match the paired device — possible impostor"
+                                    "public key does not match the paired device — re-pair required"
                             )
+                            rejectedPublicKey = device.publicKey.copyOf()
+                            needsRePair = true
+                            scope.launch(Dispatchers.Main) { onPairingRejected?.invoke() }
                             close(reconnect = false)
                             return
                         }
+                        rejectedPublicKey = null
                         try {
                             val myKeyPair = cryptoManager.getOrCreateKeyPair()
                             val peerPubKey = cryptoManager.parsePublicKey(peerPubKeyBytes)
@@ -299,8 +334,13 @@ class WebSocketClient private constructor(private val context: Context) {
             pingJob?.cancel()
             pingJob = scope.launch {
                 while (isConnected && isActive) {
-                    delay(15_000L)
+                    delay(8_000L)
                     if (!isConnected) break
+                    if (System.currentTimeMillis() - lastHeardAt > 20_000L) {
+                        Log.w(TAG, "[${device.deviceId.take(8)}] No data for 20s — reconnecting")
+                        handleDisconnect()
+                        break
+                    }
                     try {
                         output?.write(byteArrayOf(0, 0, 0, 0))
                         output?.flush()
@@ -364,6 +404,10 @@ class WebSocketClient private constructor(private val context: Context) {
         }
 
         private fun handleDisconnect() {
+            if (stopping) {
+                publishConnection()
+                return
+            }
             isConnected = false
             isConnecting = false
             handshakeComplete = false
@@ -377,6 +421,8 @@ class WebSocketClient private constructor(private val context: Context) {
         }
 
         private fun scheduleReconnect() {
+            if (stopping) return
+            if (rejectedPublicKey?.contentEquals(device.publicKey) == true) return
             if (reconnectJob?.isActive == true) return
             reconnectJob = scope.launch {
                 delay(reconnectDelay)
@@ -389,9 +435,11 @@ class WebSocketClient private constructor(private val context: Context) {
         }
 
         fun close(reconnect: Boolean) {
+            stopping = !reconnect
             reconnectJob?.cancel()
             readJob?.cancel()
             pingJob?.cancel()
+            connectJob?.cancel()
             try { socket?.close() } catch (_: Exception) {}
             socket = null
             input = null
@@ -399,7 +447,10 @@ class WebSocketClient private constructor(private val context: Context) {
             isConnected = false
             isConnecting = false
             handshakeComplete = false
-            if (reconnect) scheduleReconnect()
+            if (reconnect) {
+                stopping = false
+                scheduleReconnect()
+            }
         }
     }
 }

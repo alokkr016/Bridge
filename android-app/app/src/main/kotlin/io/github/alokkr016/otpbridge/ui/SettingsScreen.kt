@@ -68,10 +68,26 @@ fun SettingsScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 } else {
-                    pairedDevices.forEach { device ->
-                        Column(Modifier.fillMaxWidth()) {
+                    pairedDevices.forEachIndexed { index, device ->
+                        if (index > 0) Divider(modifier = Modifier.padding(vertical = 4.dp))
+                        Column(
+                            Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text(
+                                device.label,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            InfoRow(label = "Type", value = device.kindLabel)
                             InfoRow(label = "Address", value = "${device.ip}:${device.port}")
-                            InfoRow(label = "Device", value = device.deviceId.take(16) + "…")
+                            if (device.displayName.isNullOrBlank()) {
+                                Text(
+                                    "Scan this device’s QR again to save its computer name.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                             TextButton(onClick = { deviceToRemove = device }) {
                                 Text("Remove", color = MaterialTheme.colorScheme.error)
                             }
@@ -191,7 +207,7 @@ fun SettingsScreen(
         AlertDialog(
             onDismissRequest = { deviceToRemove = null },
             title = { Text("Remove this device?") },
-            text = { Text("Bridge will stop sending OTPs to ${device.ip}. Scan its QR code to pair again.") },
+            text = { Text("Bridge will stop sending OTPs to ${device.label} (${device.ip}). Scan its QR code to pair again.") },
             confirmButton = {
                 TextButton(onClick = {
                     onRemoveDevice(device.deviceId)

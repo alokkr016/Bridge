@@ -10,47 +10,121 @@ struct IncomingCallView: View {
     let onAnswer: () -> Void
     let onHangup: () -> Void
 
+    private var displayName: String {
+        name.isEmpty ? (number.isEmpty ? "Unknown" : number) : name
+    }
+
     var body: some View {
-        VStack(spacing: 14) {
-            Image(systemName: ringing ? "phone.fill" : "phone.connection.fill")
-                .font(.system(size: 28))
-                .foregroundStyle(ringing ? Color.green : Color.secondary)
+        HStack(spacing: 12) {
+            // Icon container with soft background badge
+            ZStack {
+                Circle()
+                    .fill(ringing ? Color.green.opacity(0.18) : Color.primary.opacity(0.08))
+                    .frame(width: 34, height: 34)
 
-            Text(ringing ? "Incoming call" : "On a call")
-                .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(.secondary)
-
-            Text(name.isEmpty ? (number.isEmpty ? "Unknown" : number) : name)
-                .font(.system(size: 18, weight: .semibold))
-                .lineLimit(1)
-            if !name.isEmpty && !number.isEmpty {
-                Text(number)
-                    .font(.system(size: 12))
-                    .foregroundStyle(.secondary)
+                Image(systemName: ringing ? "phone.down.waves.left.and.right" : "phone.connection.fill")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(ringing ? Color.green : Color.primary.opacity(0.8))
+                    .symbolEffect(.bounce, options: .repeating, isActive: ringing)
             }
 
-            HStack(spacing: 12) {
+            // Caller details
+            VStack(alignment: .leading, spacing: 2) {
+                Text(displayName)
+                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+
+                HStack(spacing: 4) {
+                    if ringing {
+                        Text("Incoming Call")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Circle()
+                            .fill(Color.green)
+                            .frame(width: 6, height: 6)
+                        Text("On call")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(.secondary)
+                    }
+
+                    if !name.isEmpty && !number.isEmpty {
+                        Text("•")
+                            .font(.system(size: 10))
+                            .foregroundStyle(.tertiary)
+                        Text(number)
+                            .font(.system(size: 11, weight: .regular, design: .monospaced))
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            // Buttons
+            HStack(spacing: 8) {
                 if ringing {
                     Button(action: onAnswer) {
-                        Label("Answer", systemImage: "phone.fill")
-                            .frame(maxWidth: .infinity)
+                        Image(systemName: "phone.fill")
+                            .font(.system(size: 13, weight: .bold))
+                            .foregroundStyle(.white)
+                            .frame(width: 32, height: 32)
+                            .background(
+                                LinearGradient(
+                                    colors: [Color.green, Color.green.opacity(0.85)],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                ),
+                                in: Circle()
+                            )
+                            .shadow(color: Color.green.opacity(0.35), radius: 4, x: 0, y: 2)
                     }
-                    .buttonStyle(.borderedProminent)
-                    .tint(.green)
-                    .controlSize(.large)
+                    .buttonStyle(.plain)
                 }
-                Button(role: .destructive, action: onHangup) {
-                    Label(ringing ? "Decline" : "Hang up", systemImage: "phone.down.fill")
-                        .frame(maxWidth: .infinity)
+
+                Button(action: onHangup) {
+                    Image(systemName: "phone.down.fill")
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundStyle(.white)
+                        .frame(width: 32, height: 32)
+                        .background(
+                            LinearGradient(
+                                colors: [Color.red, Color.red.opacity(0.85)],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            ),
+                            in: Circle()
+                        )
+                        .shadow(color: Color.red.opacity(0.35), radius: 4, x: 0, y: 2)
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(.red)
-                .controlSize(.large)
+                .buttonStyle(.plain)
             }
         }
-        .padding(20)
-        .frame(width: 320)
-        .background(.regularMaterial)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .frame(minWidth: 260, maxWidth: 300)
+        .background {
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .stroke(
+                            LinearGradient(
+                                colors: [
+                                    Color.white.opacity(0.25),
+                                    Color.white.opacity(0.05),
+                                    Color.black.opacity(0.1)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1
+                        )
+                )
+                .shadow(color: .black.opacity(0.2), radius: 16, x: 0, y: 8)
+        }
+        .padding(8) // padding around pill for shadow rendering
     }
 }
 
@@ -108,21 +182,22 @@ final class IncomingCallController {
         } else {
             let window = NSWindow(
                 contentRect: NSRect(origin: .zero, size: size),
-                styleMask: [.titled, .closable, .fullSizeContentView],
+                styleMask: [.borderless, .fullSizeContentView],
                 backing: .buffered,
                 defer: false
             )
-            window.title = "Bridge"
-            window.titlebarAppearsTransparent = true
+            window.title = "Bridge Call"
             window.isReleasedWhenClosed = false
+            window.isOpaque = false
+            window.backgroundColor = .clear
+            window.hasShadow = false // shadow is drawn via SwiftUI for crisp pill edges
             window.level = .floating
             window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+            window.isMovableByWindowBackground = true
             window.contentView = hosting
-            window.center()
             if let screen = NSScreen.main {
-                let frame = window.frame
-                let x = screen.visibleFrame.midX - frame.width / 2
-                let y = screen.visibleFrame.maxY - frame.height - 48
+                let x = screen.visibleFrame.maxX - size.width - 20
+                let y = screen.visibleFrame.maxY - size.height - 20
                 window.setFrameOrigin(NSPoint(x: x, y: y))
             }
             window.makeKeyAndOrderFront(nil)
