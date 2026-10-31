@@ -25,8 +25,8 @@ android {
         applicationId = "io.github.alokkr016.otpbridge"
         minSdk = 26
         targetSdk = 35
-        versionCode = 10007
-        versionName = "1.0.7"
+        versionCode = 10008
+        versionName = "1.0.8"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
@@ -75,7 +75,10 @@ android {
 
 dependencies {
     // Compose
-    val composeBom = platform("androidx.compose:compose-bom:2024.01.00")
+    // 2024.01.00 ships a Material3 whose indeterminate progress indicator
+    // calls KeyframesSpec.at(Object, int), which that BOM's animation-core
+    // does not have. Check for updates crashed as soon as the spinner appeared.
+    val composeBom = platform("androidx.compose:compose-bom:2024.10.01")
     implementation(composeBom)
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
