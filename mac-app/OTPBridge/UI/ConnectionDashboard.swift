@@ -20,11 +20,19 @@ struct ConnectionDashboard: View {
                 VStack(alignment: .leading, spacing: 0) {
                     Text("Connection")
                         .font(.system(size: 28, weight: .semibold))
-                    Text(isConnected ? "Live" : "Offline")
-                        .font(.system(size: 13))
-                        .foregroundStyle(Brand.muted)
-                        .padding(.top, 6)
-                        .padding(.bottom, 22)
+                    Group {
+                        if isConnected {
+                            Text("Live")
+                                .font(.system(size: 13, weight: .medium))
+                                .blinkRed()
+                        } else {
+                            Text("Offline")
+                                .font(.system(size: 13))
+                                .foregroundStyle(Brand.muted)
+                        }
+                    }
+                    .padding(.top, 6)
+                    .padding(.bottom, 22)
 
                     connectionSection
                     deviceSection

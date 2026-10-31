@@ -75,9 +75,7 @@ struct SettingsWindow: View {
                     .disabled(updater.isChecking)
                 }
                 infoLine("Version", value: UpdaterManager.currentVersion)
-                Text("Made with ♥ by [Alok](https://github.com/alokkr016)")
-                    .font(.system(size: 13))
-                    .foregroundStyle(Brand.muted)
+                MadeByAlok()
                     .padding(.vertical, 12)
 
                 sectionLabel("Danger")

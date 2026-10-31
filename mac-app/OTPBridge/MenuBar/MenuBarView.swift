@@ -81,13 +81,17 @@ struct MenuBarView: View {
                 Text("Bridge")
                     .font(.system(size: 22, weight: .semibold))
                 Spacer()
-                Text(serverConnected ? "Live" : "Offline")
-                    .font(.system(size: 13))
-                    .foregroundStyle(Brand.muted)
+                if serverConnected {
+                    Text("Live")
+                        .font(.system(size: 13, weight: .medium))
+                        .blinkRed()
+                } else {
+                    Text("Offline")
+                        .font(.system(size: 13))
+                        .foregroundStyle(Brand.muted)
+                }
             }
-            Text("Made with ♥ by [Alok](https://github.com/alokkr016)")
-                .font(.system(size: 12))
-                .foregroundStyle(Brand.muted)
+            MadeByAlok()
         }
         .padding(.horizontal, 22)
         .padding(.top, 18)

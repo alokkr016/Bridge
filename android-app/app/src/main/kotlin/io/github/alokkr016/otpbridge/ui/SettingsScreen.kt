@@ -2,6 +2,11 @@ package io.github.alokkr016.otpbridge.ui
 
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.ClickableText
@@ -11,6 +16,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -248,8 +254,21 @@ fun SettingsScreen(
 internal fun MadeByAlok() {
     val context = LocalContext.current
     val link = "https://github.com/alokkr016"
+    val alpha by rememberInfiniteTransition(label = "heart").animateFloat(
+        initialValue = 1f,
+        targetValue = 0.25f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 650),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "alpha"
+    )
     val credit = buildAnnotatedString {
-        append("Made with ♥ by ")
+        append("Made with ")
+        withStyle(SpanStyle(color = Color.Red.copy(alpha = alpha))) {
+            append("♥")
+        }
+        append(" by ")
         pushStringAnnotation(tag = "URL", annotation = link)
         withStyle(SpanStyle(textDecoration = TextDecoration.Underline)) {
             append("Alok")

@@ -3,6 +3,11 @@ package io.github.alokkr016.otpbridge.ui
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -11,6 +16,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -107,12 +113,16 @@ private fun ScreenChrome(
         ) {
             Column(Modifier.weight(1f)) {
                 Text("Bridge", fontSize = 28.sp, fontWeight = FontWeight.SemiBold)
-                Text(
-                    status,
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
+                if (status == "Live") {
+                    BlinkingRed(text = "Live", fontSize = 14.sp, modifier = Modifier.padding(top = 4.dp))
+                } else {
+                    Text(
+                        status,
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
             }
             TextButton(onClick = onSettings) {
                 Text("Settings", color = MaterialTheme.colorScheme.onSurface)
@@ -307,6 +317,26 @@ private fun PillButton(text: String, onClick: () -> Unit) {
     ) {
         Text(text, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
     }
+}
+
+@Composable
+private fun BlinkingRed(text: String, fontSize: androidx.compose.ui.unit.TextUnit, modifier: Modifier = Modifier) {
+    val alpha by rememberInfiniteTransition(label = "blink").animateFloat(
+        initialValue = 1f,
+        targetValue = 0.25f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 650),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "alpha"
+    )
+    Text(
+        text,
+        fontSize = fontSize,
+        fontWeight = FontWeight.Medium,
+        color = Color.Red.copy(alpha = alpha),
+        modifier = modifier
+    )
 }
 
 private fun groupedOtp(otp: String): String {
