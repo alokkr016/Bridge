@@ -78,6 +78,17 @@ h1 {
   max-width: 46ch;
 }
 
+.brag {
+  margin: 28px 0 0;
+}
+
+.brag video {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #000;
+}
+
 .features {
   list-style: none;
   margin: 36px 0 0;
