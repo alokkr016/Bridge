@@ -2,3 +2,4 @@
 -keep class kotlinx.serialization.** { *; }
 -dontwarn okhttp3.**
 -keep class okhttp3.** { *; }
+-dontwarn com.google.errorprone.annotations.**
