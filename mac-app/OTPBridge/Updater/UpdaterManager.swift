@@ -72,7 +72,8 @@ class UpdaterManager: ObservableObject {
                           let platforms = json["platforms"] as? [String: Any],
                           let darwinUniversal = platforms["darwin-universal"] as? [String: Any],
                           let urlStr = darwinUniversal["url"] as? String,
-                          let url = URL(string: urlStr) else {
+                          let url = URL(string: urlStr),
+                          Self.isAllowedUpdateURL(url) else {
                         
                         DispatchQueue.main.async {
                             if manually {
@@ -88,10 +89,6 @@ class UpdaterManager: ObservableObject {
                             self.latestVersion = version
                             self.downloadURL = url
                             self.statusMessage = "New version \(version) available!"
-                            
-                            if !manually {
-                                self.downloadAndInstallUpdate()
-                            }
                         }
                     } else {
                         DispatchQueue.main.async {
@@ -128,7 +125,7 @@ class UpdaterManager: ObservableObject {
     }
     
     func downloadAndInstallUpdate() {
-        guard let url = downloadURL, !isDownloading else { return }
+        guard let url = downloadURL, Self.isAllowedUpdateURL(url), !isDownloading else { return }
         
         DispatchQueue.main.async {
             self.isDownloading = true
@@ -176,43 +173,106 @@ class UpdaterManager: ObservableObject {
         }.resume()
     }
     
+    private static func isAllowedUpdateURL(_ url: URL) -> Bool {
+        guard url.scheme?.lowercased() == "https", let host = url.host?.lowercased() else { return false }
+        if host == "bridge-updater.alokraj016.workers.dev" || host == "github.com" { return true }
+        return host.hasSuffix(".githubusercontent.com")
+    }
+
     private func installUpdate(dmgURL: URL) throws {
         let currentAppURL = URL(fileURLWithPath: Bundle.main.bundlePath)
-        
+        let mount = FileManager.default.temporaryDirectory.appendingPathComponent("bridge-update-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: mount, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: mount) }
+
+        let attach = Process()
+        attach.executableURL = URL(fileURLWithPath: "/usr/bin/hdiutil")
+        attach.arguments = ["attach", dmgURL.path, "-mountpoint", mount.path, "-nobrowse", "-quiet"]
+        try attach.run()
+        attach.waitUntilExit()
+        guard attach.terminationStatus == 0 else {
+            throw CocoaError(.fileReadCorruptFile)
+        }
+        defer {
+            let detach = Process()
+            detach.executableURL = URL(fileURLWithPath: "/usr/bin/hdiutil")
+            detach.arguments = ["detach", mount.path, "-quiet"]
+            try? detach.run()
+            detach.waitUntilExit()
+        }
+
+        let newApp = mount.appendingPathComponent("Bridge.app")
+        guard FileManager.default.fileExists(atPath: newApp.path),
+              Self.signatureMatchesRunningApp(newApp, current: currentAppURL) else {
+            throw CocoaError(.fileReadCorruptFile)
+        }
+        let staged = FileManager.default.temporaryDirectory.appendingPathComponent("Bridge-verified.app")
+        try? FileManager.default.removeItem(at: staged)
+        try FileManager.default.copyItem(at: newApp, to: staged)
+
         let script = """
-        # Wait for the main app to terminate
         kill -0 \(ProcessInfo.processInfo.processIdentifier) 2>/dev/null
         while [ $? -eq 0 ]; do
             sleep 0.2
             kill -0 \(ProcessInfo.processInfo.processIdentifier) 2>/dev/null
         done
-        
-        # Mount the downloaded DMG to a unique mountpoint
-        MOUNT_DIR=$(mktemp -d)
-        hdiutil attach "\(dmgURL.path)" -mountpoint "$MOUNT_DIR" -nobrowse -quiet
-        
-        # Check if Bridge.app exists on the mount
-        if [ -d "$MOUNT_DIR/Bridge.app" ]; then
-            # Delete old app and copy new app
-            rm -rf "\(currentAppURL.path)"
-            cp -R "$MOUNT_DIR/Bridge.app" "\(currentAppURL.path)"
-        fi
-        
-        # Unmount DMG and clean up
-        hdiutil detach "$MOUNT_DIR" -quiet
-        rm -rf "$MOUNT_DIR"
-        
-        # Relaunch application
+        rm -rf "\(currentAppURL.path)"
+        cp -R "\(staged.path)" "\(currentAppURL.path)"
+        rm -rf "\(staged.path)"
         open "\(currentAppURL.path)"
         """
-        
         let shProcess = Process()
         shProcess.executableURL = URL(fileURLWithPath: "/bin/sh")
         shProcess.arguments = ["-c", script]
         try shProcess.run()
-        
+
         DispatchQueue.main.async {
             NSApplication.shared.terminate(nil)
         }
+    }
+
+    private static func signatureMatchesRunningApp(_ candidate: URL, current: URL) -> Bool {
+        guard codesignVerified(candidate),
+              let newTeam = teamIdentifier(of: candidate),
+              let currentTeam = teamIdentifier(of: current),
+              !newTeam.isEmpty, newTeam != "not set",
+              newTeam == currentTeam else {
+            return false
+        }
+        return true
+    }
+
+    private static func codesignVerified(_ app: URL) -> Bool {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/codesign")
+        process.arguments = ["--verify", "--strict", app.path]
+        process.standardOutput = Pipe()
+        process.standardError = Pipe()
+        do {
+            try process.run()
+        } catch {
+            return false
+        }
+        process.waitUntilExit()
+        return process.terminationStatus == 0
+    }
+
+    private static func teamIdentifier(of app: URL) -> String? {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/codesign")
+        process.arguments = ["-dv", app.path]
+        let errorPipe = Pipe()
+        process.standardOutput = Pipe()
+        process.standardError = errorPipe
+        do {
+            try process.run()
+        } catch {
+            return nil
+        }
+        process.waitUntilExit()
+        let text = String(data: errorPipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
+        return text.split(separator: "\n")
+            .first { $0.hasPrefix("TeamIdentifier=") }
+            .map { String($0.dropFirst("TeamIdentifier=".count)).trimmingCharacters(in: .whitespaces) }
     }
 }

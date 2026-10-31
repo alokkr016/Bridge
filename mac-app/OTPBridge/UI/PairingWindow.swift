@@ -95,6 +95,7 @@ struct PairingWindow: View {
 
     private func startPairing() {
         if isConnected { return }
+        PairingManager.shared.beginPairingMode()
         pairingURL = PairingManager.shared.getPairingURL()
         if let url = pairingURL {
             qrImage = QRCodeGenerator.generate(from: url)

@@ -106,12 +106,8 @@ class BLEScanner(private val context: Context) {
                 status: Int
             ) {
                 if (status == BluetoothGatt.GATT_SUCCESS && characteristic.uuid == IP_CHAR_UUID) {
-                    val ip = characteristic.value?.toString(Charsets.UTF_8) ?: ""
-                    Log.d(TAG, "Mac IP from BLE: $ip")
+                    acceptSignedDiscovery(characteristic.value?.toString(Charsets.UTF_8).orEmpty())
                     gatt.disconnect()
-                    if (ip.isNotEmpty()) {
-                        updateStoredIP(ip)
-                    }
                 }
             }
 
@@ -122,31 +118,41 @@ class BLEScanner(private val context: Context) {
                 status: Int
             ) {
                 if (status == BluetoothGatt.GATT_SUCCESS && characteristic.uuid == IP_CHAR_UUID) {
-                    val ip = value.toString(Charsets.UTF_8)
-                    Log.d(TAG, "Mac IP from BLE: $ip")
+                    acceptSignedDiscovery(value.toString(Charsets.UTF_8))
                     gatt.disconnect()
-                    if (ip.isNotEmpty()) {
-                        updateStoredIP(ip)
-                    }
                 }
             }
         })
     }
 
-    private fun updateStoredIP(newIP: String) {
-        val device = keyPairStore.getPairedDevice() ?: return
-        if (device.ip == newIP) {
-            Log.d(TAG, "IP unchanged ($newIP), no update needed")
+    private fun acceptSignedDiscovery(text: String) {
+        val parts = text.trim().split(Regex("\\s+"))
+        if (parts.size != 5 || parts[0] != "OTPBRIDGE") {
+            Log.w(TAG, "Rejected discovery without a signature")
             return
         }
-        Log.d(TAG, "Updating Mac IP: ${device.ip} → $newIP")
+        val ip = parts[1]
+        val port = parts[2].toIntOrNull() ?: return
+        val deviceId = parts[3]
+        val mac = parts[4]
+        if (mac.length != 64) return
+        val device = keyPairStore.getPairedDevice() ?: return
+        if (!device.deviceId.equals(deviceId, ignoreCase = true)) return
+        val expected = io.github.alokkr016.otpbridge.crypto.SessionCrypto.beaconMac(
+            device.sharedSecret, ip, port, deviceId
+        )
+        if (!io.github.alokkr016.otpbridge.crypto.SessionCrypto.constantTimeEquals(expected, mac)) {
+            Log.w(TAG, "Rejected forged discovery")
+            return
+        }
+        if (device.ip == ip) return
         keyPairStore.savePairedDevice(
             deviceId = device.deviceId,
             publicKey = device.publicKey,
-            ip = newIP,
-            port = device.port,
+            ip = ip,
+            port = port,
             sharedSecret = device.sharedSecret
         )
-        handler.post { onIPDiscovered?.invoke(newIP) }
+        handler.post { onIPDiscovered?.invoke(ip) }
     }
 }

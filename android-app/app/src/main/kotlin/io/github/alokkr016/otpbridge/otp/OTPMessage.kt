@@ -16,7 +16,8 @@ data class OTPMessage(
 data class HandshakeMessage(
     @SerialName("type") val type: String = "handshake",
     @SerialName("device_id") val deviceId: String,
-    @SerialName("public_key") val publicKey: String
+    @SerialName("public_key") val publicKey: String,
+    @SerialName("token") val token: String? = null
 )
 
 @Serializable

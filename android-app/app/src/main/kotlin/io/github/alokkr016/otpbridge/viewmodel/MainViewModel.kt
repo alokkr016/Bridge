@@ -51,8 +51,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun completePairing(deviceId: String, publicKey: ByteArray, ip: String, port: Int) {
-        pairingManager.completePairing(deviceId, publicKey, ip, port)
+    fun completePairing(deviceId: String, publicKey: ByteArray, ip: String, port: Int, pairingToken: String? = null) {
+        pairingManager.completePairing(deviceId, publicKey, ip, port, pairingToken)
         (isPaired as MutableStateFlow).value = true
         webSocketClient.connect()
     }

@@ -32,8 +32,8 @@ fun MainScreen(viewModel: MainViewModel = viewModel()) {
 
     if (showPairing) {
         PairingScreen(
-            onPaired = { deviceId, publicKey, ip, port ->
-                viewModel.completePairing(deviceId, publicKey, ip, port)
+            onPaired = { deviceId, publicKey, ip, port, token ->
+                viewModel.completePairing(deviceId, publicKey, ip, port, token)
                 showPairing = false
             },
             onDismiss = { showPairing = false }
