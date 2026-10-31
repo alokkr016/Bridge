@@ -1,6 +1,9 @@
 package io.github.alokkr016.otpbridge.ui
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
@@ -8,6 +11,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import io.github.alokkr016.otpbridge.crypto.PairedDevice
 import io.github.alokkr016.otpbridge.update.UpdateInfo
@@ -69,6 +76,7 @@ fun SettingsScreen(
             InfoRow(label = "App", value = "Bridge")
             InfoRow(label = "Protocol", value = "X25519 + AES-256-GCM over TCP :8420")
             InfoRow(label = "Network", value = "Local Wi-Fi only — no cloud")
+            MadeByAlok()
 
             Divider()
 
@@ -135,6 +143,29 @@ fun SettingsScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun MadeByAlok() {
+    val context = LocalContext.current
+    val link = "https://github.com/alokkr016"
+    val credit = buildAnnotatedString {
+        append("Made with ♥ by ")
+        pushStringAnnotation(tag = "URL", annotation = link)
+        withStyle(SpanStyle(textDecoration = TextDecoration.Underline)) {
+            append("Alok")
+        }
+        pop()
+    }
+    ClickableText(
+        text = credit,
+        style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
+        modifier = Modifier.padding(top = 4.dp)
+    ) { offset ->
+        credit.getStringAnnotations(tag = "URL", start = offset, end = offset)
+            .firstOrNull()
+            ?.let { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(it.item))) }
     }
 }
 

@@ -313,6 +313,12 @@ struct MenuBarView: View {
                 .padding(.trailing, 12)
             }
             .padding(.vertical, 4)
+
+            Text("Made with ♥ by [Alok](https://github.com/alokkr016)")
+                .font(.system(size: 11))
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity)
+                .padding(.bottom, 6)
         }
         .padding(.vertical, 5)
     }
