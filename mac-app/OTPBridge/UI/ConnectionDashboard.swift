@@ -32,7 +32,9 @@ struct ConnectionDashboard: View {
             }
         }
         .frame(width: 420, height: 520)
-        .background(Color(NSColor.windowBackgroundColor))
+        .background(Brand.canvas)
+        .foregroundStyle(Brand.ink)
+        .preferredColorScheme(.dark)
         .onAppear {
             setupCallbacks()
             startAutoPing()

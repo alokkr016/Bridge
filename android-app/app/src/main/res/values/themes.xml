@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.OTPBridge" parent="android:Theme.Material.Light.NoActionBar">
-        <item name="android:colorPrimary">#6650a4</item>
-        <item name="android:colorPrimaryDark">#625b71</item>
-        <item name="android:colorAccent">#7D5260</item>
+    <style name="Theme.OTPBridge" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">#000000</item>
+        <item name="android:statusBarColor">#000000</item>
+        <item name="android:navigationBarColor">#000000</item>
+        <item name="android:colorPrimary">#FFFFFF</item>
+        <item name="android:colorPrimaryDark">#000000</item>
+        <item name="android:colorAccent">#FFFFFF</item>
     </style>
 
     <!-- Fully invisible shell for ClipboardRelayActivity. It must be a real,

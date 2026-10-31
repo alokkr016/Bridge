@@ -2,6 +2,7 @@ package io.github.alokkr016.otpbridge.ui
 
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.rememberScrollState
@@ -276,7 +277,8 @@ internal fun MadeByAlok() {
 private fun SettingsCard(title: String, content: @Composable ColumnScope.() -> Unit) {
     Surface(
         shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
     ) {
         Column(
             modifier = Modifier
