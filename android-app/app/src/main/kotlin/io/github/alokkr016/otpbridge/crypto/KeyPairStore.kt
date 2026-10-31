@@ -4,6 +4,8 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.util.Base64
 import android.util.Log
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKey
 import org.json.JSONArray
 import org.json.JSONObject
 import java.security.KeyFactory
@@ -14,7 +16,7 @@ import java.util.UUID
 
 class KeyPairStore(context: Context) {
 
-    private val prefs: SharedPreferences = context.getSharedPreferences("crypto_prefs", Context.MODE_PRIVATE)
+    private val prefs: SharedPreferences = openPrefs(context)
 
     fun saveKeyPair(keyPair: KeyPair) {
         val pubKey = Base64.encodeToString(keyPair.public.encoded, Base64.NO_WRAP)
@@ -67,7 +69,9 @@ class KeyPairStore(context: Context) {
             sharedSecret = sharedSecret,
             displayName = displayName?.takeIf { it.isNotBlank() } ?: previous?.displayName,
             kind = kind?.takeIf { it.isNotBlank() } ?: previous?.kind,
-            pairingToken = pairingToken?.takeIf { it.isNotBlank() } ?: previous?.pairingToken
+            pairingToken = pairingToken?.takeIf { it.isNotBlank() } ?: previous?.pairingToken,
+            sendSeq = if (previous != null && previous.publicKey.contentEquals(publicKey)) previous.sendSeq else 0L,
+            recvSeq = if (previous != null && previous.publicKey.contentEquals(publicKey)) previous.recvSeq else 0L
         )
         if (idx >= 0) devices[idx] = updated else devices.add(updated)
         persist(devices)
@@ -91,7 +95,9 @@ class KeyPairStore(context: Context) {
                             sharedSecret = Base64.decode(o.getString("sharedSecret"), Base64.NO_WRAP),
                             displayName = o.optString("displayName").takeIf { it.isNotBlank() },
                             kind = o.optString("kind").takeIf { it.isNotBlank() },
-                            pairingToken = o.optString("pairingToken").takeIf { it.isNotBlank() }
+                            pairingToken = o.optString("pairingToken").takeIf { it.isNotBlank() },
+                            sendSeq = o.optLong("sendSeq"),
+                            recvSeq = o.optLong("recvSeq")
                         )
                     )
                 }
@@ -141,6 +147,37 @@ class KeyPairStore(context: Context) {
         return target.copy(ip = newIP)
     }
 
+    fun clearPairingToken(deviceId: String) {
+        val devices = getPairedDevices().toMutableList()
+        val idx = devices.indexOfFirst { it.deviceId == deviceId }
+        if (idx < 0 || devices[idx].pairingToken == null) return
+        devices[idx] = devices[idx].copy(pairingToken = null)
+        persist(devices)
+    }
+
+    @Synchronized
+    fun allocateSendSeq(deviceId: String): Long {
+        val devices = getPairedDevices().toMutableList()
+        val idx = devices.indexOfFirst { it.deviceId == deviceId }
+        if (idx < 0) return 1L
+        val next = devices[idx].sendSeq + 1L
+        devices[idx] = devices[idx].copy(sendSeq = next)
+        persist(devices)
+        return next
+    }
+
+    @Synchronized
+    fun acceptRecvSeq(deviceId: String, seq: Long): Boolean {
+        if (seq <= 0L) return false
+        val devices = getPairedDevices().toMutableList()
+        val idx = devices.indexOfFirst { it.deviceId == deviceId }
+        if (idx < 0) return false
+        if (seq <= devices[idx].recvSeq) return false
+        devices[idx] = devices[idx].copy(recvSeq = seq)
+        persist(devices)
+        return true
+    }
+
     fun clearPairing() {
         prefs.edit()
             .remove(KEY_DEVICES)
@@ -166,12 +203,14 @@ class KeyPairStore(context: Context) {
                     .put("displayName", d.displayName ?: "")
                     .put("kind", d.kind ?: "")
                     .put("pairingToken", d.pairingToken ?: "")
+                    .put("sendSeq", d.sendSeq)
+                    .put("recvSeq", d.recvSeq)
             )
         }
         prefs.edit()
             .putString(KEY_DEVICES, arr.toString())
             .putBoolean("is_paired", devices.isNotEmpty())
-            .apply()
+            .commit()
     }
 
     private fun migrateLegacyIfNeeded() {
@@ -198,6 +237,42 @@ class KeyPairStore(context: Context) {
     companion object {
         private const val TAG = "KeyPairStore"
         private const val KEY_DEVICES = "paired_devices_json"
+        private const val PLAIN_PREFS = "crypto_prefs"
+        private const val SECURE_PREFS = "crypto_prefs_secure"
+        private const val MIGRATED = "migrated_v1"
+
+        private fun openPrefs(context: Context): SharedPreferences {
+            val masterKey = MasterKey.Builder(context)
+                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                .build()
+            val secure = EncryptedSharedPreferences.create(
+                context,
+                SECURE_PREFS,
+                masterKey,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
+            val plain = context.getSharedPreferences(PLAIN_PREFS, Context.MODE_PRIVATE)
+            if (!secure.getBoolean(MIGRATED, false)) {
+                if (plain.all.isNotEmpty()) {
+                    val editor = secure.edit()
+                    for ((key, value) in plain.all) {
+                        when (value) {
+                            is String -> editor.putString(key, value)
+                            is Boolean -> editor.putBoolean(key, value)
+                            is Int -> editor.putInt(key, value)
+                            is Long -> editor.putLong(key, value)
+                            is Float -> editor.putFloat(key, value)
+                        }
+                    }
+                    editor.putBoolean(MIGRATED, true).commit()
+                    plain.edit().clear().commit()
+                } else {
+                    secure.edit().putBoolean(MIGRATED, true).apply()
+                }
+            }
+            return secure
+        }
     }
 }
 
@@ -209,7 +284,9 @@ data class PairedDevice(
     val sharedSecret: ByteArray,
     val displayName: String? = null,
     val kind: String? = null,
-    val pairingToken: String? = null
+    val pairingToken: String? = null,
+    val sendSeq: Long = 0L,
+    val recvSeq: Long = 0L
 ) {
     val kindLabel: String
         get() = when (kind?.lowercase()) {

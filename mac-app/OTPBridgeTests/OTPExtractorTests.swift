@@ -11,6 +11,7 @@ final class OTPExtractorTests: XCTestCase {
             ("Random App", "Hello world", nil),
             ("Bank", "Your code: 123456", "123456"),
             ("Auth", "PIN: 7890", "7890"),
+            ("Shop", "Use code 123456 at checkout", nil),
         ]
 
         for testCase in testCases {
@@ -38,11 +39,7 @@ final class OTPExtractorTests: XCTestCase {
     }
 
     private func extractOTPFromText(sender: String, text: String) -> String? {
-        let keywords = ["otp", "OTP", "code", "Code", "verification", "Verification", "pin", "PIN"]
-        let hasKeyword = keywords.contains { text.contains($0) }
-        guard hasKeyword else { return nil }
-
-        let pattern = Regex("""\b(\d{4,8})\b""")
+        let pattern = /(?i)(?:otp|code|pin|password|verification)\s*(?:is|:)\s*(\d{4,8})/
         if let match = text.firstMatch(of: pattern) {
             return String(match.1)
         }

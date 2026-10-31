@@ -11,6 +11,10 @@ class WebSocketServer {
     private var sharedSecret: Data?
     private let cryptoManager = CryptoManager.shared
     private let pairingManager = PairingManager.shared
+    private let keyPairStore = KeyPairStore()
+    /// Orders sequence allocation with the bytes on the wire. A later frame
+    /// must not overtake an earlier one or the phone treats it as a replay.
+    private let sendQueue = DispatchQueue(label: "io.github.alokkr016.otpbridge.send")
 
     var onOTPReceived: ((String, String, String?, TimeInterval) -> Void)?
     var onCallReceived: ((String, String, String?) -> Void)?
@@ -84,6 +88,11 @@ class WebSocketServer {
     }
 
     private func handleNewConnection(_ newConnection: NWConnection) {
+        guard isPrivateLan(newConnection) else {
+            NSLog("[OTPBridge] Rejected connection from a non-local address")
+            newConnection.cancel()
+            return
+        }
         if let existing = connection {
             existing.cancel()
         }
@@ -93,6 +102,29 @@ class WebSocketServer {
         isConnected = false
         newConnection.start(queue: .global())
         readLoop(connection: newConnection)
+    }
+
+    private func isPrivateLan(_ connection: NWConnection) -> Bool {
+        guard case let .hostPort(host, _) = connection.endpoint else { return false }
+        switch host {
+        case .ipv4(let address):
+            return Self.isPrivateIPv4(String(describing: address))
+        case .ipv6(let address):
+            let text = String(describing: address).lowercased()
+            return text == "::1" || text.hasPrefix("fe80") || text.hasPrefix("fc") || text.hasPrefix("fd")
+        default:
+            return false
+        }
+    }
+
+    private static func isPrivateIPv4(_ text: String) -> Bool {
+        let parts = text.split(separator: ".").compactMap { Int($0) }
+        guard parts.count == 4, parts.allSatisfy({ (0...255).contains($0) }) else { return false }
+        if parts[0] == 10 || parts[0] == 127 { return true }
+        if parts[0] == 192 && parts[1] == 168 { return true }
+        if parts[0] == 172 && (16...31).contains(parts[1]) { return true }
+        if parts[0] == 169 && parts[1] == 254 { return true }
+        return false
     }
 
     /// Only the *current* connection may flip UI / server state. A cancelled
@@ -187,8 +219,12 @@ class WebSocketServer {
     private func processMessage(_ data: Data) {
         if let secret = sharedSecret {
             do {
-                let decrypted = try cryptoManager.decrypt(ciphertext: data, key: secret)
-                let json = try JSONSerialization.jsonObject(with: decrypted) as? [String: Any]
+                let opened = try cryptoManager.openFrame(ciphertext: data, key: secret)
+                guard keyPairStore.acceptRecvSeq(opened.seq) else {
+                    NSLog("[OTPBridge] Rejected replayed frame")
+                    return
+                }
+                let json = try JSONSerialization.jsonObject(with: opened.body) as? [String: Any]
                 guard let type = json?["type"] as? String else { return }
 
                 if type == "otp" {
@@ -227,18 +263,19 @@ class WebSocketServer {
                     let state = json?["state"] as? String ?? "idle"
                     let number = json?["number"] as? String ?? ""
                     let name = json?["name"] as? String
-                    NSLog("[OTPBridge] Call \(state) \(name ?? number)")
+                    NSLog("[OTPBridge] Call \(state)")
                     DispatchQueue.main.async {
                         self.onCallReceived?(state, number, name)
                     }
                 }
             } catch {
-                // Decryption failed with stored secret — Android re-paired or cleared data.
-                // Reset and try treating this as a new handshake.
-                NSLog("[OTPBridge] Decryption failed (\(error)), resetting and attempting re-handshake")
+                // A failed decrypt is not a handshake. Treating the ciphertext as
+                // one let a peer on the socket replace the paired phone.
+                NSLog("[OTPBridge] Decryption failed (\(error)) — closing connection")
+                connection?.cancel()
+                connection = nil
                 sharedSecret = nil
                 isConnected = false
-                handleHandshake(data)
             }
         } else {
             handleHandshake(data)
@@ -311,6 +348,10 @@ class WebSocketServer {
     }
 
     func sendBinary(_ data: Data) {
+        sendQueue.sync { writeFrame(data) }
+    }
+
+    private func writeFrame(_ data: Data) {
         guard let conn = connection else {
             NSLog("[OTPBridge] No connection to send on")
             return
@@ -331,26 +372,32 @@ class WebSocketServer {
     func sendCallControl(_ action: String) {
         guard FeatureSettings.shared.callHandlingEnabled else { return }
         guard let secret = sharedSecret else { return }
-        do {
-            let payload = try JSONSerialization.data(withJSONObject: ["type": "call_control", "action": action])
-            let encrypted = try cryptoManager.encrypt(plaintext: payload, key: secret)
-            sendBinary(encrypted)
-            NSLog("[OTPBridge] Call control sent: \(action)")
-        } catch {
-            NSLog("[OTPBridge] Failed to send call control: \(error)")
+        sendQueue.sync {
+            do {
+                let payload = try JSONSerialization.data(withJSONObject: ["type": "call_control", "action": action])
+                let seq = keyPairStore.allocateSendSeq()
+                let encrypted = try cryptoManager.seal(plaintext: payload, key: secret, seq: seq)
+                writeFrame(encrypted)
+                NSLog("[OTPBridge] Call control sent: \(action)")
+            } catch {
+                NSLog("[OTPBridge] Failed to send call control: \(error)")
+            }
         }
     }
 
     func sendClipboard(_ text: String) {
         guard FeatureSettings.shared.clipboardSyncEnabled else { return }
         guard let secret = sharedSecret else { return }
-        do {
-            let payload = try JSONSerialization.data(withJSONObject: ["type": "clipboard", "text": text])
-            let encrypted = try cryptoManager.encrypt(plaintext: payload, key: secret)
-            sendBinary(encrypted)
-            NSLog("[OTPBridge] Clipboard sent to Android")
-        } catch {
-            NSLog("[OTPBridge] Failed to send clipboard: \(error)")
+        sendQueue.sync {
+            do {
+                let payload = try JSONSerialization.data(withJSONObject: ["type": "clipboard", "text": text])
+                let seq = keyPairStore.allocateSendSeq()
+                let encrypted = try cryptoManager.seal(plaintext: payload, key: secret, seq: seq)
+                writeFrame(encrypted)
+                NSLog("[OTPBridge] Clipboard sent to Android")
+            } catch {
+                NSLog("[OTPBridge] Failed to send clipboard: \(error)")
+            }
         }
     }
 
