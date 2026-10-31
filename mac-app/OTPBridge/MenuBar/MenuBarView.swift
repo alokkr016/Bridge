@@ -19,6 +19,7 @@ struct MenuBarView: View {
     @State private var copiedOTP: String?
     @State private var hoveredID: UUID?
     @State private var chimeEnabled = SoundManager.shared.isEnabled
+    @State private var callsEnabled = CallHandling.enabled
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -240,6 +241,7 @@ struct MenuBarView: View {
                 NotificationCenter.default.post(name: openDashboardNotification, object: nil)
             }
             chimeToggleRow
+            callToggleRow
             
             Divider().padding(.horizontal, 8).padding(.vertical, 4)
             
@@ -333,6 +335,36 @@ struct MenuBarView: View {
                 Text(chimeEnabled ? "On" : "Off")
                     .font(.system(size: 11))
                     .foregroundStyle(chimeEnabled ? Color.green : Color.secondary.opacity(0.6))
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .frame(maxWidth: .infinity)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(HoverRowStyle())
+        .padding(.horizontal, 8)
+    }
+
+    private var callToggleRow: some View {
+        Button(action: {
+            callsEnabled.toggle()
+            CallHandling.enabled = callsEnabled
+            if !callsEnabled {
+                IncomingCallController.shared.handle(state: "idle", number: "", name: nil)
+            }
+        }) {
+            HStack(spacing: 9) {
+                Image(systemName: callsEnabled ? "phone.fill" : "phone.down.fill")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                    .frame(width: 15)
+                Text("Incoming Calls")
+                    .font(.system(size: 12))
+                    .foregroundStyle(.primary)
+                Spacer()
+                Text(callsEnabled ? "On" : "Off")
+                    .font(.system(size: 11))
+                    .foregroundStyle(callsEnabled ? Color.green : Color.secondary.opacity(0.6))
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 6)

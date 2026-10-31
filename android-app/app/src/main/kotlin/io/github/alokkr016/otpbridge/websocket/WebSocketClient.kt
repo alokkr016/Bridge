@@ -52,6 +52,7 @@ class WebSocketClient private constructor(private val context: Context) {
 
     var onConnectionChanged: ((Boolean) -> Unit)? = null
     var onClipboardReceived: ((String) -> Unit)? = null
+    var onCallControl: ((String) -> Unit)? = null
     var onDisconnected: (() -> Unit)? = null
     var onHandshakeComplete: (() -> Unit)? = null
 
@@ -157,6 +158,14 @@ class WebSocketClient private constructor(private val context: Context) {
                                         }
                                     }
                                 }
+                                "call_control" -> {
+                                    val action = msgJson.optString("action")
+                                    if (action == "answer" || action == "hangup") {
+                                        withContext(Dispatchers.Main) { onCallControl?.invoke(action) }
+                                    } else {
+                                        Log.w(TAG, "Ignored call control")
+                                    }
+                                }
                             }
                         } catch (e: Exception) {
                             Log.e(TAG, "Decryption failed (${e.message}) — re-handshaking")
@@ -254,6 +263,25 @@ class WebSocketClient private constructor(private val context: Context) {
             bytes
         } catch (e: Exception) {
             null
+        }
+    }
+
+    fun sendCall(state: String, number: String, name: String?) {
+        if (state != "ringing" && state != "offhook" && state != "idle") return
+        if (!isConnected || !handshakeComplete || sharedSecret == null) return
+        scope.launch {
+            try {
+                val obj = org.json.JSONObject()
+                    .put("type", "call")
+                    .put("state", state)
+                    .put("number", number.take(40))
+                val trimmed = name?.take(80)
+                if (!trimmed.isNullOrBlank()) obj.put("name", trimmed)
+                sendEncrypted(obj.toString().toByteArray())
+                Log.d(TAG, "Call state sent: $state")
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to send call state: ${e.message}")
+            }
         }
     }
 

@@ -19,6 +19,7 @@ import androidx.core.content.ContextCompat
 import io.github.alokkr016.otpbridge.MainActivity
 import io.github.alokkr016.otpbridge.R
 import io.github.alokkr016.otpbridge.notification.NotificationHelper
+import io.github.alokkr016.otpbridge.call.CallController
 import io.github.alokkr016.otpbridge.pairing.BLEScanner
 import io.github.alokkr016.otpbridge.websocket.WebSocketClient
 
@@ -32,6 +33,7 @@ class BridgeForegroundService : Service() {
 
     private val webSocketClient by lazy { WebSocketClient.getInstance(this) }
     private val bleScanner by lazy { BLEScanner(this) }
+    private val callController by lazy { CallController(this) }
     private var wakeLock: PowerManager.WakeLock? = null
     private var wifiLock: WifiManager.WifiLock? = null
 
@@ -71,6 +73,14 @@ class BridgeForegroundService : Service() {
             tryStartBLEScan()
         }
 
+        callController.onCallState = { state, number, name ->
+            webSocketClient.sendCall(state, number, name)
+        }
+        webSocketClient.onCallControl = { action ->
+            callController.handleControl(action)
+        }
+        callController.start()
+
         webSocketClient.connect()
 
         return START_STICKY
@@ -96,6 +106,7 @@ class BridgeForegroundService : Service() {
     }
 
     override fun onDestroy() {
+        callController.stop()
         bleScanner.stopScan()
         wakeLock?.release()
         wifiLock?.release()

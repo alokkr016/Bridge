@@ -15,6 +15,7 @@ class WebSocketServer {
     private let sendQueue = DispatchQueue(label: "io.github.alokkr016.otpbridge.send")
 
     var onOTPReceived: ((String, String, String?, TimeInterval) -> Void)?
+    var onCallReceived: ((String, String, String?) -> Void)?
 
     var isConnected = false {
         didSet {
@@ -204,6 +205,20 @@ class WebSocketServer {
                             ClipboardManager.shared.receiveFromAndroid(text)
                         }
                     }
+                } else if type == "call" {
+                    guard CallHandling.enabled else {
+                        NSLog("[OTPBridge] Call event ignored — call handling is off")
+                        return
+                    }
+                    let state = json?["state"] as? String ?? "idle"
+                    guard state == "ringing" || state == "offhook" || state == "idle" else { return }
+                    let number = String(((json?["number"] as? String) ?? "").prefix(40))
+                    let rawName = json?["name"] as? String
+                    let name = rawName.map { String($0.prefix(80)) }
+                    NSLog("[OTPBridge] Call \(state)")
+                    DispatchQueue.main.async {
+                        self.onCallReceived?(state, number, name)
+                    }
                 }
             } catch {
                 NSLog("[OTPBridge] Decryption failed (\(error)), closing connection")
@@ -288,6 +303,23 @@ class WebSocketServer {
                 NSLog("[OTPBridge] Send error: \(error)")
             }
         })
+    }
+
+    func sendCallControl(_ action: String) {
+        guard action == "answer" || action == "hangup" else { return }
+        guard CallHandling.enabled else { return }
+        guard let secret = sharedSecret else { return }
+        sendQueue.sync {
+            do {
+                let payload = try JSONSerialization.data(withJSONObject: ["type": "call_control", "action": action])
+                let seq = keyPairStore.allocateSendSeq()
+                let encrypted = try cryptoManager.seal(plaintext: payload, key: secret, seq: seq)
+                writeFrame(encrypted)
+                NSLog("[OTPBridge] Call control sent: \(action)")
+            } catch {
+                NSLog("[OTPBridge] Failed to send call control: \(error)")
+            }
+        }
     }
 
     func sendClipboard(_ text: String) {
