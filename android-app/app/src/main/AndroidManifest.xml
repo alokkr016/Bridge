@@ -18,6 +18,7 @@
     <uses-permission android:name="android.permission.READ_CALL_LOG" />
     <uses-permission android:name="android.permission.ANSWER_PHONE_CALLS" />
     <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <uses-permission android:name="android.permission.READ_PHONE_NUMBERS" />
     <!-- BLE scanning to discover Mac IP when it changes -->
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN"
         android:usesPermissionFlags="neverForLocation" />
@@ -47,6 +48,55 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Invisible focus-holder so the tile / notification paths can legally
+             read the clipboard on Android 10+. Never user-visible. -->
+        <activity
+            android:name=".clipboard.ClipboardRelayActivity"
+            android:exported="false"
+            android:theme="@style/Theme.OTPBridge.Invisible"
+            android:launchMode="singleInstance"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:finishOnTaskLaunch="true" />
+
+        <!-- "Send to Bridge" on the text-selection toolbar and the share sheet.
+             The selection arrives in the Intent, so no clipboard access (and
+             hence no window focus) is needed. -->
+        <activity
+            android:name=".clipboard.SendSelectionActivity"
+            android:exported="true"
+            android:label="@string/send_to_bridge"
+            android:icon="@drawable/ic_bridge_infinity"
+            android:theme="@style/Theme.OTPBridge.Invisible"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:finishOnTaskLaunch="true">
+            <intent-filter>
+                <action android:name="android.intent.action.PROCESS_TEXT" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
+
+        <!-- Quick Settings tile: one pull-down + tap sends the clipboard. -->
+        <service
+            android:name=".clipboard.ClipboardTileService"
+            android:exported="true"
+            android:icon="@android:drawable/ic_menu_send"
+            android:label="@string/tile_clipboard_label"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
 
         <service
             android:name=".notification.OTNotificationListenerService"

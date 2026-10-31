@@ -26,6 +26,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
+import io.github.alokkr016.otpbridge.clipboard.ClipboardSyncer
 import io.github.alokkr016.otpbridge.service.BridgeForegroundService
 import io.github.alokkr016.otpbridge.service.ServiceWatchdogWorker
 import io.github.alokkr016.otpbridge.ui.MainScreen
@@ -41,13 +42,12 @@ class MainActivity : ComponentActivity() {
 
     private val webSocketClient by lazy { WebSocketClient.getInstance(this) }
     private var clipboardManager: ClipboardManager? = null
-    private var lastSentClip: String? = null
     private var showBatteryDialog by mutableStateOf(false)
 
     // Fires while MainActivity is the foreground app — Android 10+ allows clipboard
     // reads inside this callback when the activity is visible.
     private val clipListener = ClipboardManager.OnPrimaryClipChangedListener {
-        sendClipboardIfNew()
+        ClipboardSyncer.syncNow(this)
     }
 
     private val requestPermissionLauncher = registerForActivityResult(
@@ -63,7 +63,7 @@ class MainActivity : ComponentActivity() {
         checkNotificationListenerPermission()
         clipboardManager = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         // Track what Mac sends us so we don't echo it back
-        webSocketClient.onClipboardReceived = { text -> lastSentClip = text }
+        webSocketClient.onClipboardReceived = { text -> ClipboardSyncer.noteRemoteClip(text) }
         ServiceWatchdogWorker.schedule(this)
 
         setContent {
@@ -111,24 +111,13 @@ class MainActivity : ComponentActivity() {
         if (hasFocus) {
             // OS only grants clipboard access once the window has focus — not during onResume.
             // Reading here avoids the "application is not in focus" denial from ClipboardService.
-            sendClipboardIfNew()
+            ClipboardSyncer.syncNow(this)
         }
     }
 
     override fun onPause() {
         super.onPause()
         clipboardManager?.removePrimaryClipChangedListener(clipListener)
-    }
-
-    private fun sendClipboardIfNew() {
-        val text = try {
-            clipboardManager?.primaryClip?.getItemAt(0)?.text?.toString()
-        } catch (e: Exception) { null }
-        if (text.isNullOrEmpty()) return
-        if (text == lastSentClip) return
-        lastSentClip = text
-        Log.d(TAG, "Clipboard → Mac: ${text.take(40)}")
-        webSocketClient.sendClipboard(text)
     }
 
     private fun checkNotificationListenerPermission() {
@@ -145,7 +134,17 @@ class MainActivity : ComponentActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED)
                 permissions.add(Manifest.permission.BLUETOOTH_CONNECT)
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED)
+                permissions.add(Manifest.permission.BLUETOOTH_SCAN)
         }
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED)
+            permissions.add(Manifest.permission.READ_PHONE_STATE)
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ANSWER_PHONE_CALLS) != PackageManager.PERMISSION_GRANTED)
+            permissions.add(Manifest.permission.ANSWER_PHONE_CALLS)
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CALL_LOG) != PackageManager.PERMISSION_GRANTED)
+            permissions.add(Manifest.permission.READ_CALL_LOG)
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED)
+            permissions.add(Manifest.permission.READ_CONTACTS)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED)
                 permissions.add(Manifest.permission.POST_NOTIFICATIONS)

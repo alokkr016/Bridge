@@ -36,7 +36,7 @@ private const val TAG = "PairingScreen"
 
 @Composable
 fun PairingScreen(
-    onPaired: (deviceId: String, publicKey: ByteArray, ip: String, port: Int, pairingToken: String?) -> Unit,
+    onPaired: (deviceId: String, publicKey: ByteArray, ip: String, port: Int, displayName: String?, kind: String?, pairingToken: String?) -> Unit,
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
@@ -129,9 +129,11 @@ fun PairingScreen(
                                             val publicKey = android.util.Base64.decode(publicKeyPadded, android.util.Base64.NO_WRAP)
                                             val ip = uri.getQueryParameter("ip") ?: return@setAnalyzer
                                             val port = uri.getQueryParameter("port")?.toIntOrNull() ?: 8420
-                                            val token = uri.getQueryParameter("token")
-                                            Log.i(TAG, "Pairing: deviceId=$deviceId ip=$ip port=$port")
-                                            onPaired(deviceId, publicKey, ip, port, token)
+                                            val displayName = uri.getQueryParameter("name")?.trim()?.takeIf { it.isNotEmpty() }
+                                            val kind = uri.getQueryParameter("kind")?.trim()?.takeIf { it.isNotEmpty() }
+                                            val pairingToken = uri.getQueryParameter("token")?.trim()?.takeIf { it.isNotEmpty() }
+                                            Log.i(TAG, "Pairing: deviceId=$deviceId ip=$ip port=$port name=$displayName kind=$kind")
+                                            onPaired(deviceId, publicKey, ip, port, displayName, kind, pairingToken)
                                         }
                                     } catch (_: NotFoundException) {
                                         // no QR in frame, keep scanning

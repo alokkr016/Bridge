@@ -9,7 +9,7 @@ struct ConnectionDashboard: View {
     @State private var isPinging = false
     @State private var testOTPStatus: String? = nil
     @State private var lastOTPTime: Date? = nil
-    @State private var macIP: String = currentMacIP()
+    @State private var macIP: String = LocalAddress.ipv4() ?? "—"
     @State private var pairedDeviceId: String = PairingManager.shared.getPairedDevice()?.deviceId ?? "—"
     @State private var totalOTPs: Int = StorageManager.shared.getRecentOTPs(limit: 1000).count
     @State private var pingTimer: Timer? = nil
@@ -274,7 +274,7 @@ struct ConnectionDashboard: View {
 
     private func setupCallbacks() {
         isConnected = WebSocketServer.shared.isConnected
-        macIP = currentMacIP()
+        macIP = LocalAddress.ipv4() ?? "—"
         pairedDeviceId = PairingManager.shared.getPairedDevice()?.deviceId ?? "—"
         totalOTPs = StorageManager.shared.getRecentOTPs(limit: 1000).count
         let recent = StorageManager.shared.getRecentOTPs(limit: 1)
@@ -282,20 +282,4 @@ struct ConnectionDashboard: View {
     }
 }
 
-private func currentMacIP() -> String {
-    var address = "—"
-    var ifaddr: UnsafeMutablePointer<ifaddrs>?
-    guard getifaddrs(&ifaddr) == 0, let first = ifaddr else { return address }
-    defer { freeifaddrs(ifaddr) }
-    for ptr in sequence(first: first, next: { $0.pointee.ifa_next }) {
-        let iface = ptr.pointee
-        if iface.ifa_addr.pointee.sa_family == UInt8(AF_INET),
-           String(cString: iface.ifa_name) == "en0" {
-            var host = [CChar](repeating: 0, count: Int(NI_MAXHOST))
-            getnameinfo(iface.ifa_addr, socklen_t(iface.ifa_addr.pointee.sa_len),
-                        &host, socklen_t(host.count), nil, 0, NI_NUMERICHOST)
-            address = String(cString: host)
-        }
-    }
-    return address
-}
+

@@ -86,9 +86,6 @@ class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         case Self.hangupAction:
             IncomingCallController.shared.hangup()
         default:
-            if response.notification.request.content.categoryIdentifier == Self.callCategory {
-                break
-            }
             let otp = response.notification.request.content.body
             if let otpCode = otp.components(separatedBy: ": ").last?.components(separatedBy: "\n").first {
                 ClipboardManager.shared.copyToClipboard(otpCode)

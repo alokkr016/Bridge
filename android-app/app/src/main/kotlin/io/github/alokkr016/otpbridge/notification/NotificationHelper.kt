@@ -9,16 +9,19 @@ import io.github.alokkr016.otpbridge.R
 
 object NotificationHelper {
 
-    private const val CHANNEL_ID = "otp_bridge_channel"
+    const val CHANNEL_ID = "otp_bridge_status"
     private const val NOTIFICATION_ID = 1001
 
     fun createChannel(context: Context) {
         val channel = NotificationChannel(
             CHANNEL_ID,
             "Bridge",
-            NotificationManager.IMPORTANCE_LOW
+            NotificationManager.IMPORTANCE_DEFAULT
         ).apply {
-            description = "Shows Bridge connection status"
+            description = "Shows Bridge is running"
+            setSound(null, null)
+            enableVibration(false)
+            setShowBadge(false)
         }
         val manager = context.getSystemService(NotificationManager::class.java)
         manager.createNotificationChannel(channel)
@@ -27,7 +30,7 @@ object NotificationHelper {
     fun showConnectionStatus(context: Context, connected: Boolean) {
         val manager = context.getSystemService(NotificationManager::class.java)
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setSmallIcon(R.drawable.ic_stat_infinity)
             .setContentTitle("Bridge")
             .setContentText(if (connected) "Connected to Mac" else "Disconnected")
             .setOngoing(true)

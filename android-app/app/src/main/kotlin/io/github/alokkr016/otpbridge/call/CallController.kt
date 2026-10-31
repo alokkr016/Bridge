@@ -14,8 +14,8 @@ import android.util.Log
 import androidx.core.content.ContextCompat
 
 /**
- * Watches cellular call state and answers or ends the ringing or active call.
- * Audio stays on the phone. This is control only.
+ * Watches cellular call state and answers / ends the ringing or active call.
+ * Audio stays on the phone — this is control only.
  */
 class CallController(private val context: Context) {
 
@@ -76,10 +76,11 @@ class CallController(private val context: Context) {
     }
 
     fun handleControl(action: String) {
+        Log.d(TAG, "Call control from Mac: $action")
         when (action) {
             "answer" -> answer()
             "hangup" -> hangup()
-            else -> Log.w(TAG, "Unknown call action")
+            else -> Log.w(TAG, "Unknown call action: $action")
         }
     }
 
@@ -123,11 +124,13 @@ class CallController(private val context: Context) {
             lastNumber = ""
             lastName = null
         }
-        // The first PHONE_STATE is often missing the number; a second fire fills it in.
+        // First PHONE_STATE is often missing the number; a second fire fills it in.
         if (mapped == lastState && incomingNumber.isBlank()) return
         lastState = mapped
-        Log.d(TAG, "Call state=$mapped")
-        onCallState?.invoke(mapped, lastNumber, lastName)
+        val number = lastNumber
+        val name = lastName
+        Log.d(TAG, "Call state=$mapped number=$number name=$name")
+        onCallState?.invoke(mapped, number, name)
     }
 
     private fun lookupName(number: String): String? {

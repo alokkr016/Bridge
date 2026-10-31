@@ -1,0 +1,369 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		PAD000000000000000000002 /* OTPBridgePadApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = PAD000000000000000000001 /* OTPBridgePadApp.swift */; };
+		PAD000000000000000000004 /* CryptoManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = PAD000000000000000000003 /* CryptoManager.swift */; };
+		PAD000000000000000000006 /* KeyPairStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = PAD000000000000000000005 /* KeyPairStore.swift */; };
+		PAD000000000000000000008 /* PairingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = PAD000000000000000000007 /* PairingManager.swift */; };
+		PAD00000000000000000000A /* QRCodeGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = PAD000000000000000000009 /* QRCodeGenerator.swift */; };
+		PAD00000000000000000000C /* LocalAddress.swift in Sources */ = {isa = PBXBuildFile; fileRef = PAD00000000000000000000B /* LocalAddress.swift */; };
+		PAD00000000000000000000E /* TCPServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = PAD00000000000000000000D /* TCPServer.swift */; };
+		PAD000000000000000000010 /* LanBeacon.swift in Sources */ = {isa = PBXBuildFile; fileRef = PAD00000000000000000000F /* LanBeacon.swift */; };
+		PAD000000000000000000012 /* BLECentral.swift in Sources */ = {isa = PBXBuildFile; fileRef = PAD000000000000000000011 /* BLECentral.swift */; };
+		PAD000000000000000000014 /* ClipboardManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = PAD000000000000000000013 /* ClipboardManager.swift */; };
+		PAD000000000000000000016 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = PAD000000000000000000015 /* NotificationManager.swift */; };
+		PAD000000000000000000018 /* OTPStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = PAD000000000000000000017 /* OTPStore.swift */; };
+		PAD00000000000000000001A /* Brand.swift in Sources */ = {isa = PBXBuildFile; fileRef = PAD000000000000000000019 /* Brand.swift */; };
+		PAD00000000000000000001C /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = PAD00000000000000000001B /* HomeView.swift */; };
+		PAD00000000000000000001E /* PairingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = PAD00000000000000000001D /* PairingView.swift */; };
+		PAD000000000000000000020 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = PAD00000000000000000001F /* SettingsView.swift */; };
+		PAD000000000000000000385 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = PAD000000000000000000384 /* Assets.xcassets */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		PAD000000000000000000001 /* OTPBridgePadApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OTPBridgePadApp.swift; sourceTree = "<group>"; };
+		PAD000000000000000000003 /* CryptoManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CryptoManager.swift; sourceTree = "<group>"; };
+		PAD000000000000000000005 /* KeyPairStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyPairStore.swift; sourceTree = "<group>"; };
+		PAD000000000000000000007 /* PairingManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairingManager.swift; sourceTree = "<group>"; };
+		PAD000000000000000000009 /* QRCodeGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRCodeGenerator.swift; sourceTree = "<group>"; };
+		PAD00000000000000000000B /* LocalAddress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalAddress.swift; sourceTree = "<group>"; };
+		PAD00000000000000000000D /* TCPServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TCPServer.swift; sourceTree = "<group>"; };
+		PAD00000000000000000000F /* LanBeacon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanBeacon.swift; sourceTree = "<group>"; };
+		PAD000000000000000000011 /* BLECentral.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLECentral.swift; sourceTree = "<group>"; };
+		PAD000000000000000000013 /* ClipboardManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardManager.swift; sourceTree = "<group>"; };
+		PAD000000000000000000015 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
+		PAD000000000000000000017 /* OTPStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OTPStore.swift; sourceTree = "<group>"; };
+		PAD000000000000000000019 /* Brand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Brand.swift; sourceTree = "<group>"; };
+		PAD00000000000000000001B /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		PAD00000000000000000001D /* PairingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairingView.swift; sourceTree = "<group>"; };
+		PAD00000000000000000001F /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		PAD000000000000000000384 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		PAD000000000000000000386 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		PAD000000000000000000391 /* Bridge.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Bridge.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		PAD0000000000000000003A3 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		PAD00000000000000000038E = {
+			isa = PBXGroup;
+			children = (
+				PAD00000000000000000038F /* OTPBridgePad */,
+				PAD000000000000000000390 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		PAD000000000000000000390 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				PAD000000000000000000391 /* Bridge.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		PAD00000000000000000038F /* OTPBridgePad */ = {
+			isa = PBXGroup;
+			children = (
+				PAD000000000000000000001 /* OTPBridgePadApp.swift */,
+				PAD0000000000000000003B6 /* Crypto */,
+				PAD0000000000000000003B7 /* Pairing */,
+				PAD0000000000000000003B8 /* Network */,
+				PAD0000000000000000003B9 /* BLE */,
+				PAD0000000000000000003BA /* Clipboard */,
+				PAD0000000000000000003BB /* Notification */,
+				PAD0000000000000000003BC /* Storage */,
+				PAD0000000000000000003BD /* UI */,
+				PAD000000000000000000384 /* Assets.xcassets */,
+				PAD000000000000000000386 /* Info.plist */,
+			);
+			path = OTPBridgePad;
+			sourceTree = "<group>";
+		};
+		PAD0000000000000000003B6 /* Crypto */ = {
+			isa = PBXGroup;
+			children = (
+				PAD000000000000000000003 /* CryptoManager.swift */,
+				PAD000000000000000000005 /* KeyPairStore.swift */,
+			);
+			path = Crypto;
+			sourceTree = "<group>";
+		};
+		PAD0000000000000000003B7 /* Pairing */ = {
+			isa = PBXGroup;
+			children = (
+				PAD000000000000000000007 /* PairingManager.swift */,
+				PAD000000000000000000009 /* QRCodeGenerator.swift */,
+			);
+			path = Pairing;
+			sourceTree = "<group>";
+		};
+		PAD0000000000000000003B8 /* Network */ = {
+			isa = PBXGroup;
+			children = (
+				PAD00000000000000000000B /* LocalAddress.swift */,
+				PAD00000000000000000000D /* TCPServer.swift */,
+				PAD00000000000000000000F /* LanBeacon.swift */,
+			);
+			path = Network;
+			sourceTree = "<group>";
+		};
+		PAD0000000000000000003B9 /* BLE */ = {
+			isa = PBXGroup;
+			children = (
+				PAD000000000000000000011 /* BLECentral.swift */,
+			);
+			path = BLE;
+			sourceTree = "<group>";
+		};
+		PAD0000000000000000003BA /* Clipboard */ = {
+			isa = PBXGroup;
+			children = (
+				PAD000000000000000000013 /* ClipboardManager.swift */,
+			);
+			path = Clipboard;
+			sourceTree = "<group>";
+		};
+		PAD0000000000000000003BB /* Notification */ = {
+			isa = PBXGroup;
+			children = (
+				PAD000000000000000000015 /* NotificationManager.swift */,
+			);
+			path = Notification;
+			sourceTree = "<group>";
+		};
+		PAD0000000000000000003BC /* Storage */ = {
+			isa = PBXGroup;
+			children = (
+				PAD000000000000000000017 /* OTPStore.swift */,
+			);
+			path = Storage;
+			sourceTree = "<group>";
+		};
+		PAD0000000000000000003BD /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				PAD000000000000000000019 /* Brand.swift */,
+				PAD00000000000000000001B /* HomeView.swift */,
+				PAD00000000000000000001D /* PairingView.swift */,
+				PAD00000000000000000001F /* SettingsView.swift */,
+			);
+			path = UI;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		PAD000000000000000000398 /* Bridge */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = PAD0000000000000000003AD;
+			buildPhases = (
+				PAD0000000000000000003A2 /* Sources */,
+				PAD0000000000000000003A3 /* Frameworks */,
+				PAD0000000000000000003A4 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Bridge;
+			productName = OTPBridgePad;
+			productReference = PAD000000000000000000391 /* Bridge.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		PAD000000000000000000399 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					PAD000000000000000000398 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = PAD0000000000000000003AC;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = PAD00000000000000000038E;
+			productRefGroup = PAD000000000000000000390 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				PAD000000000000000000398 /* Bridge */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		PAD0000000000000000003A4 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				PAD000000000000000000385 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		PAD0000000000000000003A2 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				PAD000000000000000000002 /* OTPBridgePadApp.swift in Sources */,
+				PAD000000000000000000004 /* CryptoManager.swift in Sources */,
+				PAD000000000000000000006 /* KeyPairStore.swift in Sources */,
+				PAD000000000000000000008 /* PairingManager.swift in Sources */,
+				PAD00000000000000000000A /* QRCodeGenerator.swift in Sources */,
+				PAD00000000000000000000C /* LocalAddress.swift in Sources */,
+				PAD00000000000000000000E /* TCPServer.swift in Sources */,
+				PAD000000000000000000010 /* LanBeacon.swift in Sources */,
+				PAD000000000000000000012 /* BLECentral.swift in Sources */,
+				PAD000000000000000000014 /* ClipboardManager.swift in Sources */,
+				PAD000000000000000000016 /* NotificationManager.swift in Sources */,
+				PAD000000000000000000018 /* OTPStore.swift in Sources */,
+				PAD00000000000000000001A /* Brand.swift in Sources */,
+				PAD00000000000000000001C /* HomeView.swift in Sources */,
+				PAD00000000000000000001E /* PairingView.swift in Sources */,
+				PAD000000000000000000020 /* SettingsView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		PAD0000000000000000003AE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		PAD0000000000000000003AF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		PAD0000000000000000003B0 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = M5Q7N9D29M;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = OTPBridgePad/Info.plist;
+				INFOPLIST_KEY_UIStatusBarHidden = NO;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.alokkr016.bridge.ipad;
+				PRODUCT_NAME = Bridge;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = 2;
+			};
+			name = Debug;
+		};
+		PAD0000000000000000003B1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = M5Q7N9D29M;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = OTPBridgePad/Info.plist;
+				INFOPLIST_KEY_UIStatusBarHidden = NO;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.alokkr016.bridge.ipad;
+				PRODUCT_NAME = Bridge;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = 2;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		PAD0000000000000000003AC /* Build configuration list for PBXProject */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				PAD0000000000000000003AE /* Debug */,
+				PAD0000000000000000003AF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		PAD0000000000000000003AD /* Build configuration list for PBXNativeTarget */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				PAD0000000000000000003B0 /* Debug */,
+				PAD0000000000000000003B1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = PAD000000000000000000399 /* Project object */;
+}
