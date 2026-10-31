@@ -32,6 +32,10 @@ struct SettingsView: View {
                 }
 
                 Section("About") {
+                    LabeledContent(
+                        "Version",
+                        value: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "—"
+                    )
                     Text("Codes travel over your local Wi-Fi (and Bluetooth when this iPad is "
                          + "locked), encrypted with X25519 key exchange and AES-256-GCM. "
                          + "Nothing goes to a server.")
