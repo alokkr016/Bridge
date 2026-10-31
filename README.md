@@ -250,6 +250,10 @@ Or open `mac-app/OTPBridge.xcodeproj` in Xcode and press ⌘R.
 
 ## How to Contribute
 
+Contributions back to this repository are welcome. Copying the code into another project, republishing it, or keeping a public fork as your own app is not allowed. See [LICENSE](LICENSE).
+
+A fork is only for opening a pull request here. Delete that fork after the pull request is closed.
+
 ### Development Setup
 
 1. Clone the repo
@@ -373,4 +377,6 @@ log show --predicate 'process == "OTPBridge"' --last 5m
 
 ## License
 
-Private — All rights reserved.
+Copyright (c) 2026 Alok Kumar. All rights reserved. See [LICENSE](LICENSE).
+
+You may contribute changes back to [alokkr016/Bridge](https://github.com/alokkr016/Bridge). You may not copy this code into another project or publish your own copy. The same rule covers every commit in this repository's history.

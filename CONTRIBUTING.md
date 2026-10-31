@@ -1,5 +1,7 @@
 # Contributing to OTP Bridge
 
+Contributions back to https://github.com/alokkr016/Bridge are welcome. You may not copy this code into another project, republish it, or keep a fork as a separate app. A fork is only for opening a pull request here. The full terms are in [LICENSE](LICENSE).
+
 ## Getting Started
 
 ### Prerequisites
