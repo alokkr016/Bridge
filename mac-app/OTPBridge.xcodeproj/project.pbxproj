@@ -21,6 +21,7 @@
 		AA000016 /* PairingWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000116; };
 		AA000019 /* ConnectionDashboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000119; };
 		AA000022 /* SoundManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000122; };
+		AA000023 /* IncomingCallWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000123; };
 		AA000018 /* BLEAdvertiser.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000118; };
 		AA000017 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA000117; };
 		AA000020 /* CryptoManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000120; };
@@ -47,6 +48,7 @@
 		AA000120 /* CryptoManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CryptoManagerTests.swift; sourceTree = "<group>"; };
 		AA000121 /* OTPExtractorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OTPExtractorTests.swift; sourceTree = "<group>"; };
 		AA000122 /* SoundManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundManager.swift; sourceTree = "<group>"; };
+		AA000123 /* IncomingCallWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IncomingCallWindow.swift; sourceTree = "<group>"; };
 		AA000200 /* OTPBridge.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OTPBridge.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA000199 /* UpdaterManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdaterManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -187,6 +189,7 @@
 			children = (
 				AA000116 /* PairingWindow.swift */,
 				AA000119 /* ConnectionDashboard.swift */,
+				AA000123 /* IncomingCallWindow.swift */,
 			);
 			path = UI;
 			sourceTree = "<group>";
@@ -295,6 +298,7 @@
 				AA000016 /* PairingWindow.swift in Sources */,
 				AA000019 /* ConnectionDashboard.swift in Sources */,
 				AA000022 /* SoundManager.swift in Sources */,
+				AA000023 /* IncomingCallWindow.swift in Sources */,
 				AA000099 /* UpdaterManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
