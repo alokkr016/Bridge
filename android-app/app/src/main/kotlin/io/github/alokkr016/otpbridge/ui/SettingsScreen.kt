@@ -19,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import io.github.alokkr016.otpbridge.BuildConfig
 import io.github.alokkr016.otpbridge.crypto.PairedDevice
 import io.github.alokkr016.otpbridge.update.UpdateInfo
 import io.github.alokkr016.otpbridge.update.UpdateManager
@@ -108,6 +109,7 @@ fun SettingsScreen(
 
             SettingsCard(title = "About") {
                 InfoRow(label = "App", value = "Bridge")
+                InfoRow(label = "Version", value = BuildConfig.VERSION_NAME)
                 InfoRow(label = "Encryption", value = "X25519 + AES-256-GCM")
                 InfoRow(label = "Network", value = "Local Wi-Fi only")
                 MadeByAlok()

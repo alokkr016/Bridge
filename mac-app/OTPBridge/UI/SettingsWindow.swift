@@ -146,9 +146,15 @@ struct SettingsWindow: View {
                 }
                 .disabled(updater.isChecking)
             }
-            Text("v\(UpdaterManager.currentVersion)")
-                .font(.system(size: 11))
-                .foregroundStyle(.tertiary)
+            HStack {
+                Text("Version")
+                    .font(.system(size: 13))
+                Spacer()
+                Text(UpdaterManager.currentVersion)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .textSelection(.enabled)
+            }
             Text("Made with ♥ by [Alok](https://github.com/alokkr016)")
                 .font(.system(size: 12))
                 .foregroundStyle(.secondary)
