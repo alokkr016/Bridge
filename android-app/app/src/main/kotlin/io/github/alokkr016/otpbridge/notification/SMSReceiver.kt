@@ -27,11 +27,11 @@ class SMSReceiver : BroadcastReceiver() {
 
         for ((sender, body) in smsMap) {
             val fullText = body.toString()
-            Log.d(TAG, "SMS from $sender: $fullText")
+            Log.d(TAG, "SMS received (chars=${fullText.length})")
 
-            val otpMessage = OTPExtractor.extractOTP(sender, fullText)
+            val otpMessage = OTPExtractor.extractOTP(sender, fullText, allowBareTitle = true)
             if (otpMessage != null) {
-                Log.d(TAG, "OTP extracted: ${otpMessage.otp} from ${otpMessage.sender}")
+                Log.d(TAG, "OTP extracted, length=${otpMessage.otp.length}")
                 OTNotificationListenerService.onOTPReceived?.invoke(otpMessage)
                 WebSocketClient.getInstance(context).sendOTP(otpMessage)
             }

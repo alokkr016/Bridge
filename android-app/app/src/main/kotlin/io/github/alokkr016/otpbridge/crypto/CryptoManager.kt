@@ -1,14 +1,13 @@
 package io.github.alokkr016.otpbridge.crypto
 
 import android.content.Context
+import org.json.JSONObject
 import java.security.KeyFactory
 import java.security.KeyPair
 import java.security.KeyPairGenerator
-import java.security.MessageDigest
 import java.security.SecureRandom
 import javax.crypto.Cipher
 import javax.crypto.KeyAgreement
-import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
@@ -32,8 +31,30 @@ class CryptoManager(context: Context) {
         ka.init(myPrivateKey)
         ka.doPhase(theirPublicKey, true)
         val rawSecret = ka.generateSecret()
-        val digest = MessageDigest.getInstance("SHA-256")
-        return digest.digest(rawSecret)
+        val myPublic = getOrCreateKeyPair().public
+        return SessionCrypto.deriveKey(rawSecret, raw32(myPublic), raw32(theirPublicKey))
+    }
+
+    fun seal(plaintext: ByteArray, aesKey: ByteArray, seq: Long): ByteArray {
+        val wrapper = JSONObject()
+            .put("v", 2)
+            .put("seq", seq)
+            .put("body", String(plaintext, Charsets.UTF_8))
+        return encrypt(wrapper.toString().toByteArray(Charsets.UTF_8), aesKey)
+    }
+
+    fun open(data: ByteArray, aesKey: ByteArray): OpenedFrame {
+        val outer = JSONObject(String(decrypt(data, aesKey), Charsets.UTF_8))
+        if (outer.optInt("v") != 2) throw IllegalArgumentException("unsupported frame")
+        val seq = outer.getLong("seq")
+        if (seq <= 0L) throw IllegalArgumentException("bad sequence")
+        val body = outer.getString("body").toByteArray(Charsets.UTF_8)
+        return OpenedFrame(seq, body)
+    }
+
+    private fun raw32(key: java.security.Key): ByteArray {
+        val encoded = key.encoded
+        return if (encoded.size >= 32) encoded.copyOfRange(encoded.size - 32, encoded.size) else encoded
     }
 
     fun encrypt(plaintext: ByteArray, aesKey: ByteArray): ByteArray {
@@ -83,3 +104,5 @@ class CryptoManager(context: Context) {
         return kf.generatePublic(java.security.spec.X509EncodedKeySpec(encoded))
     }
 }
+
+data class OpenedFrame(val seq: Long, val body: ByteArray)

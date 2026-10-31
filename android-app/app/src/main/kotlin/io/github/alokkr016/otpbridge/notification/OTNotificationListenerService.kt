@@ -1,7 +1,6 @@
 package io.github.alokkr016.otpbridge.notification
 
 import android.app.Notification
-import android.os.Bundle
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
@@ -14,6 +13,16 @@ class OTNotificationListenerService : NotificationListenerService() {
     companion object {
         private const val TAG = "OTNotificationListener"
         var onOTPReceived: ((OTPMessage) -> Unit)? = null
+
+        private val MESSAGING_PACKAGES = setOf(
+            "com.google.android.apps.messaging",
+            "com.android.mms",
+            "com.android.messaging",
+            "com.samsung.android.messaging",
+            "com.samsung.android.messagingapplication",
+            "com.sonyericsson.conversations",
+            "com.oneplus.mms"
+        )
     }
 
     private val webSocketClient by lazy { WebSocketClient.getInstance(this) }
@@ -36,14 +45,16 @@ class OTNotificationListenerService : NotificationListenerService() {
         extras.getCharSequence(Notification.EXTRA_INFO_TEXT)?.toString()?.let { allText.append(it).append(" ") }
 
         val fullText = allText.toString().trim()
-        Log.d(TAG, "Notification from $title: $fullText")
-
         if (fullText.isBlank()) return
 
-        val otpMessage = OTPExtractor.extractOTP(title, fullText)
+        val otpMessage = OTPExtractor.extractOTP(
+            title,
+            fullText,
+            allowBareTitle = sbn.packageName in MESSAGING_PACKAGES
+        )
 
         if (otpMessage != null) {
-            Log.d(TAG, "OTP extracted: ${otpMessage.otp} from ${otpMessage.sender}")
+            Log.d(TAG, "OTP extracted, length=${otpMessage.otp.length}")
             onOTPReceived?.invoke(otpMessage)
             webSocketClient.sendOTP(otpMessage)
         }

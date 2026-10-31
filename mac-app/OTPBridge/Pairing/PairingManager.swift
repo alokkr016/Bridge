@@ -1,5 +1,6 @@
 import Foundation
 import CryptoKit
+import Security
 
 class PairingManager {
 
@@ -8,7 +9,53 @@ class PairingManager {
     private let cryptoManager = CryptoManager.shared
     private let keyPairStore = KeyPairStore()
 
+    private(set) var isPairingModeActive = false
+    private var pairingModeExpiry: Date?
+    private(set) var pairingToken: String?
+    private static let pairingWindowDuration: TimeInterval = 300
+
     private init() {}
+
+    func beginPairingMode() {
+        isPairingModeActive = true
+        pairingModeExpiry = Date().addingTimeInterval(Self.pairingWindowDuration)
+        pairingToken = Self.makeToken()
+    }
+
+    func endPairingMode() {
+        isPairingModeActive = false
+        pairingModeExpiry = nil
+        pairingToken = nil
+    }
+
+    private static func makeToken() -> String {
+        var bytes = [UInt8](repeating: 0, count: 16)
+        _ = SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
+        return bytes.map { String(format: "%02x", $0) }.joined()
+    }
+
+    func pairingModeAvailable() -> Bool {
+        guard isPairingModeActive else { return false }
+        if let expiry = pairingModeExpiry, Date() > expiry {
+            endPairingMode()
+            return false
+        }
+        return true
+    }
+
+    func shouldAcceptHandshake(publicKeyData: Data, token: String? = nil) -> Bool {
+        guard publicKeyData.count == 32 else { return false }
+        if let known = keyPairStore.getPairedDevice(), known.publicKey == publicKeyData {
+            return true
+        }
+        guard pairingModeAvailable(), let expected = pairingToken, !expected.isEmpty else { return false }
+        guard let token, token == expected else { return false }
+        return true
+    }
+
+    func consumePairingToken() {
+        pairingToken = nil
+    }
 
     func isPaired() -> Bool {
         return keyPairStore.isPaired()
@@ -23,7 +70,9 @@ class PairingManager {
             .replacingOccurrences(of: "+", with: "-")
             .replacingOccurrences(of: "/", with: "_")
             .replacingOccurrences(of: "=", with: "")
-        return "otpbridge://\(deviceId)?pk=\(encodedKey)&ip=\(ip)&port=\(port)"
+        if pairingToken == nil { beginPairingMode() }
+        let token = pairingToken ?? ""
+        return "otpbridge://\(deviceId)?pk=\(encodedKey)&ip=\(ip)&port=\(port)&token=\(token)"
     }
 
     func completePairing(deviceId: String, publicKeyData: Data) throws -> Bool {

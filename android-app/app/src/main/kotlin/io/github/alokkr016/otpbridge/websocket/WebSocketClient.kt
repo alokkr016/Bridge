@@ -38,6 +38,8 @@ class WebSocketClient private constructor(private val context: Context) {
     private var output: DataOutputStream? = null
     private var sharedSecret: ByteArray? = null
     private var handshakeComplete = false
+    private val writeLock = Any()
+    private var rejectedPublicKey: ByteArray? = null
     val isHandshakeComplete: Boolean get() = handshakeComplete
     var isConnected = false
         private set
@@ -61,6 +63,13 @@ class WebSocketClient private constructor(private val context: Context) {
         isConnecting = true
         val pairedDevice = keyPairStore.getPairedDevice() ?: run {
             Log.w(TAG, "No paired device found")
+            isConnecting = false
+            return
+        }
+        val rejected = rejectedPublicKey
+        if (rejected != null && rejected.contentEquals(pairedDevice.publicKey)) {
+            Log.e(TAG, "Paired key was rejected — re-pair required")
+            isConnecting = false
             return
         }
 
@@ -101,10 +110,11 @@ class WebSocketClient private constructor(private val context: Context) {
             val rawPubKey = keyPair.public.encoded.takeLast(32).toByteArray()
             val handshake = HandshakeMessage(
                 deviceId = cryptoManager.getDeviceId(),
-                publicKey = java.util.Base64.getEncoder().encodeToString(rawPubKey)
+                publicKey = java.util.Base64.getEncoder().encodeToString(rawPubKey),
+                token = keyPairStore.getPairedDevice()?.pairingToken
             )
             val message = json.encodeToString(handshake).toByteArray()
-            sendFrame(message)
+            synchronized(writeLock) { writeFrame(message) }
             Log.d(TAG, "Handshake sent")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to send handshake: ${e.message}")
@@ -122,12 +132,18 @@ class WebSocketClient private constructor(private val context: Context) {
 
                     if (handshakeComplete && sharedSecret != null) {
                         try {
-                            val decrypted = cryptoManager.decrypt(payload, sharedSecret!!)
-                            val message = String(decrypted)
+                            val opened = cryptoManager.open(payload, sharedSecret!!)
+                            val device = keyPairStore.getPairedDevice()
+                            if (device == null || !keyPairStore.acceptRecvSeq(opened.seq)) {
+                                Log.w(TAG, "Rejected replayed frame")
+                                continue
+                            }
+                            val message = String(opened.body)
                             val msgJson = org.json.JSONObject(message)
                             when (msgJson.optString("type")) {
                                 "otp" -> {
                                     val otpMessage = json.decodeFromString(OTPMessage.serializer(), message)
+                                    Log.d(TAG, "OTP received, length=${otpMessage.otp.length}")
                                     OTNotificationListenerService.onOTPReceived?.invoke(otpMessage)
                                 }
                                 "clipboard" -> {
@@ -144,30 +160,39 @@ class WebSocketClient private constructor(private val context: Context) {
                             }
                         } catch (e: Exception) {
                             Log.e(TAG, "Decryption failed (${e.message}) — re-handshaking")
-                            // Mac may have restarted and regenerated its key pair; re-initiate handshake
                             handshakeComplete = false
                             sharedSecret = keyPairStore.getPairedDevice()?.sharedSecret
                             sendHandshake()
                         }
                     } else {
                         val text = String(payload)
-                        Log.d(TAG, "Received: $text")
+                        Log.d(TAG, "Received handshake frame (${text.length} chars)")
                         try {
                             val ack = json.decodeFromString(HandshakeAckMessage.serializer(), text)
                             if (ack.type == "handshake_ack") {
-                                // Re-derive shared secret from Mac's current public key every handshake.
-                                // The stored secret may be stale if the Mac re-paired or cleared prefs.
+                                val device = keyPairStore.getPairedDevice()
+                                val macPubKeyBytes = try {
+                                    java.util.Base64.getDecoder().decode(ack.publicKey)
+                                } catch (e: Exception) {
+                                    Log.e(TAG, "Malformed public key in ack: ${e.message}")
+                                    continue
+                                }
+                                if (device == null || !macPubKeyBytes.contentEquals(device.publicKey)) {
+                                    Log.e(TAG, "REJECTED handshake_ack: public key does not match the paired device")
+                                    rejectedPublicKey = device?.publicKey?.copyOf()
+                                    handleDisconnect(reconnect = false)
+                                    return@launch
+                                }
+                                rejectedPublicKey = null
                                 try {
-                                    val macPubKeyBytes = java.util.Base64.getDecoder().decode(ack.publicKey)
                                     val myKeyPair = cryptoManager.getOrCreateKeyPair()
                                     val macPubKey = cryptoManager.parsePublicKey(macPubKeyBytes)
-                                    val freshSecret = cryptoManager.deriveSharedSecret(myKeyPair.private, macPubKey)
-                                    sharedSecret = freshSecret
-                                    Log.d(TAG, "Shared secret re-derived from ack public key")
+                                    sharedSecret = cryptoManager.deriveSharedSecret(myKeyPair.private, macPubKey)
+                                    keyPairStore.clearPairingToken()
                                 } catch (e: Exception) {
-                                    Log.e(TAG, "Failed to re-derive shared secret: ${e.message}")
+                                    Log.e(TAG, "Failed to derive shared secret: ${e.message}")
+                                    continue
                                 }
-                                Log.d(TAG, "Handshake acknowledged, switching to encrypted mode")
                                 handshakeComplete = true
                                 withContext(Dispatchers.Main) {
                                     onConnectionChanged?.invoke(true)
@@ -237,8 +262,7 @@ class WebSocketClient private constructor(private val context: Context) {
         scope.launch {
             try {
                 val payload = """{"type":"clipboard","text":${org.json.JSONObject.quote(text)}}""".toByteArray()
-                val encrypted = cryptoManager.encrypt(payload, sharedSecret!!)
-                sendFrame(encrypted)
+                sendEncrypted(payload)
                 Log.d(TAG, "Clipboard sent to Mac")
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to send clipboard: ${e.message}")
@@ -259,7 +283,7 @@ class WebSocketClient private constructor(private val context: Context) {
         val now = System.currentTimeMillis()
         val lastSent = recentlySentOTPs[dedupKey] ?: 0L
         if (now - lastSent < 10_000L) {
-            Log.d(TAG, "Duplicate OTP suppressed: ${otpMessage.otp}")
+            Log.d(TAG, "Duplicate OTP suppressed")
             return
         }
         recentlySentOTPs[dedupKey] = now
@@ -269,34 +293,40 @@ class WebSocketClient private constructor(private val context: Context) {
         scope.launch {
             try {
                 val jsonBytes = json.encodeToString(otpMessage).toByteArray()
-                val encrypted = cryptoManager.encrypt(jsonBytes, sharedSecret!!)
-                sendFrame(encrypted)
-                Log.d(TAG, "OTP sent: ${otpMessage.otp}")
+                sendEncrypted(jsonBytes)
+                Log.d(TAG, "OTP sent, length=${otpMessage.otp.length}")
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to send OTP: ${e.message}")
             }
         }
     }
 
-    private fun sendFrame(data: ByteArray) {
-        scope.launch(Dispatchers.IO) {
-            try {
-                val lengthBytes = byteArrayOf(
-                    ((data.size shr 24) and 0xFF).toByte(),
-                    ((data.size shr 16) and 0xFF).toByte(),
-                    ((data.size shr 8) and 0xFF).toByte(),
-                    (data.size and 0xFF).toByte()
-                )
-                output?.write(lengthBytes)
-                output?.write(data)
-                output?.flush()
-            } catch (e: Exception) {
-                Log.e(TAG, "Send failed: ${e.message}")
-            }
+    private fun sendEncrypted(plain: ByteArray) {
+        val secret = sharedSecret ?: return
+        synchronized(writeLock) {
+            val seq = keyPairStore.allocateSendSeq()
+            val frame = cryptoManager.seal(plain, secret, seq)
+            writeFrame(frame)
         }
     }
 
-    private fun handleDisconnect() {
+    private fun writeFrame(data: ByteArray) {
+        try {
+            val lengthBytes = byteArrayOf(
+                ((data.size shr 24) and 0xFF).toByte(),
+                ((data.size shr 16) and 0xFF).toByte(),
+                ((data.size shr 8) and 0xFF).toByte(),
+                (data.size and 0xFF).toByte()
+            )
+            output?.write(lengthBytes)
+            output?.write(data)
+            output?.flush()
+        } catch (e: Exception) {
+            Log.e(TAG, "Send failed: ${e.message}")
+        }
+    }
+
+    private fun handleDisconnect(reconnect: Boolean = true) {
         isConnected = false
         isConnecting = false
         handshakeComplete = false
@@ -311,7 +341,7 @@ class WebSocketClient private constructor(private val context: Context) {
             onConnectionChanged?.invoke(false)
             onDisconnected?.invoke()
         }
-        scheduleReconnect()
+        if (reconnect) scheduleReconnect()
     }
 
     fun reconnect() {

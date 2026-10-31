@@ -57,7 +57,8 @@ class BLEAdvertiser: NSObject {
         pendingStart = false
 
         let ip = currentIP() ?? "0.0.0.0"
-        let ipData = ip.data(using: .utf8) ?? Data()
+        let payload = signedDiscovery(ip: ip)
+        let ipData = payload.data(using: .utf8) ?? Data()
 
         let ipChar = CBMutableCharacteristic(
             type: BLEAdvertiser.ipCharUUID,
@@ -77,6 +78,14 @@ class BLEAdvertiser: NSObject {
         ])
         lastAdvertisedIP = ip
         NSLog("[BLEAdvertiser] Advertising on \(ip)")
+    }
+
+    private func signedDiscovery(ip: String) -> String {
+        let id = CryptoManager.shared.getDeviceId()
+        if let secret = PairingManager.shared.getPairedDevice()?.sharedSecret {
+            return SessionCrypto.signedBeacon(ip: ip, port: 8420, deviceId: id, secret: secret)
+        }
+        return "OTPBRIDGE \(ip) 8420 \(id) \(String(repeating: "0", count: 64))"
     }
 
     private func currentIP() -> String? {
