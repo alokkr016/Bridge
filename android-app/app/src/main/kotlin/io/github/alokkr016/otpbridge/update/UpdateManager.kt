@@ -105,7 +105,9 @@ class UpdateManager(private val context: Context) {
                 apkFile.delete()
                 return@withContext false
             }
-            installApk(apkFile)
+            withContext(Dispatchers.Main) {
+                installApk(apkFile)
+            }
             true
         } catch (e: Exception) {
             e.printStackTrace()
@@ -154,9 +156,20 @@ class UpdateManager(private val context: Context) {
     }
 
     private fun installApk(file: File) {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O &&
+            !context.packageManager.canRequestPackageInstalls()
+        ) {
+            val settings = Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES).apply {
+                data = Uri.parse("package:${context.packageName}")
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            context.startActivity(settings)
+            return
+        }
+
         val authority = "${context.packageName}.fileprovider"
         val apkUri: Uri = FileProvider.getUriForFile(context, authority, file)
-        
+
         val intent = Intent(Intent.ACTION_VIEW).apply {
             setDataAndType(apkUri, "application/vnd.android.package-archive")
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
