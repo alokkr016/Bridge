@@ -11,51 +11,39 @@ struct PairingWindow: View {
     @State private var macName = Host.current().localizedName ?? "This Mac"
 
     var body: some View {
-        VStack(spacing: 14) {
-            Image("Logo")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 44, height: 44)
-                .clipShape(RoundedRectangle(cornerRadius: 10))
-                .overlay(alignment: .bottomTrailing) {
-                    if didPair {
-                        Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: 16))
-                            .foregroundStyle(.green)
-                            .background(Circle().fill(Color(NSColor.windowBackgroundColor)))
-                            .offset(x: 4, y: 4)
-                    }
-                }
-
-            VStack(spacing: 4) {
-                Text(didPair ? "Phone paired" : "Pair this Mac")
-                    .font(.system(size: 17, weight: .semibold))
-                Text(didPair ? "OTPs from your phone will appear here." : macName)
-                    .font(.system(size: 12))
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-            }
+        VStack(alignment: .leading, spacing: 8) {
+            Text(didPair ? "Paired" : "Pair")
+                .font(.system(size: 28, weight: .semibold))
+            Text(didPair ? "Codes from your phone will show in the menu." : macName)
+                .font(.system(size: 13))
+                .foregroundStyle(Brand.muted)
+                .lineLimit(1)
 
             if didPair {
-                VStack(spacing: 10) {
-                    Label("Ready to receive codes", systemImage: "checkmark.circle.fill")
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(.green)
+                VStack(alignment: .leading, spacing: 16) {
                     if let id = pairedDeviceId {
                         Text("Phone \(id.prefix(8))…")
-                            .font(.system(size: 11))
-                            .foregroundStyle(.tertiary)
+                            .font(.system(size: 13))
+                            .foregroundStyle(Brand.muted)
                     }
-                    Button("Done") { close() }
-                        .keyboardShortcut(.defaultAction)
-                        .controlSize(.large)
+                    Button(action: close) {
+                        Text("Done")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(.black)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 40)
+                            .background(Color.white, in: Capsule())
+                    }
+                    .buttonStyle(.plain)
+                    .keyboardShortcut(.defaultAction)
                 }
-                .padding(.top, 8)
+                .padding(.top, 18)
             } else {
-                Text("On your phone open Bridge → Add Mac or iPad\nand scan this code.")
-                    .font(.system(size: 12))
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
+                Text("On your phone open Bridge, then Add Mac or iPad, and scan this code.")
+                    .font(.system(size: 13))
+                    .foregroundStyle(Brand.muted)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.top, 8)
 
                 if let img = qrImage {
                     Image(nsImage: img)
@@ -64,29 +52,34 @@ struct PairingWindow: View {
                         .frame(width: 220, height: 220)
                         .padding(12)
                         .background(Color.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 8)
                 } else {
                     ProgressView()
                         .frame(width: 244, height: 244)
+                        .frame(maxWidth: .infinity)
                 }
 
-                HStack(spacing: 6) {
-                    ProgressView()
-                        .controlSize(.small)
-                    Text(isListening ? "Waiting for a scan…" : "Preparing…")
-                        .font(.system(size: 12))
-                        .foregroundStyle(.secondary)
-                }
+                Text(isListening ? "Waiting for a scan" : "Preparing")
+                    .font(.system(size: 13))
+                    .foregroundStyle(Brand.muted)
 
-                Button("Close") { close() }
-                    .controlSize(.large)
-                    .keyboardShortcut(.cancelAction)
+                Button(action: close) {
+                    Text("Close")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(Brand.ink)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 40)
+                }
+                .buttonStyle(.plain)
+                .keyboardShortcut(.cancelAction)
             }
         }
         .padding(.horizontal, 28)
-        .padding(.top, 20)
-        .padding(.bottom, 24)
-        .frame(width: 360)
+        .padding(.top, 48)
+        .padding(.bottom, 28)
+        .frame(width: 380)
         .background(Brand.canvas)
         .foregroundStyle(Brand.ink)
         .preferredColorScheme(.dark)

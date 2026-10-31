@@ -2,14 +2,12 @@ package io.github.alokkr016.otpbridge.ui
 
 import android.content.Intent
 import android.net.Uri
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -20,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import io.github.alokkr016.otpbridge.BuildConfig
 import io.github.alokkr016.otpbridge.crypto.PairedDevice
 import io.github.alokkr016.otpbridge.update.UpdateInfo
@@ -49,26 +48,26 @@ fun SettingsScreen(
     var showUnpairAll by remember { mutableStateOf(false) }
     var showClearDialog by remember { mutableStateOf(false) }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Settings", fontWeight = FontWeight.SemiBold) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                }
-            )
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .statusBarsPadding()
+            .navigationBarsPadding()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 24.dp)
+            .padding(bottom = 28.dp)
+    ) {
+        TextButton(onClick = onBack, modifier = Modifier.padding(top = 8.dp)) {
+            Text("Back", color = MaterialTheme.colorScheme.onSurface)
         }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
+        Text(
+            "Settings",
+            fontSize = 32.sp,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(bottom = 20.dp)
+        )
+        Column(verticalArrangement = Arrangement.spacedBy(28.dp)) {
             SettingsCard(title = "Paired devices") {
                 if (pairedDevices.isEmpty()) {
                     Text(
@@ -103,9 +102,7 @@ fun SettingsScreen(
                         }
                     }
                 }
-                Button(onClick = onAddDevice, modifier = Modifier.fillMaxWidth()) {
-                    Text("Add Mac or iPad")
-                }
+                PillButton(text = "Add Mac or iPad", onClick = onAddDevice)
             }
 
             SettingsCard(title = "About") {
@@ -134,7 +131,8 @@ fun SettingsScreen(
                             }
                         },
                         enabled = !isChecking,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(50),
                     ) {
                         if (isChecking) {
                             CircularProgressIndicator(
@@ -172,26 +170,22 @@ fun SettingsScreen(
                                         if (!success) statusMessage = "Download failed. Try again."
                                     }
                                 },
-                                modifier = Modifier.fillMaxWidth()
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(50)
                             ) { Text("Download and install") }
                         }
                     }
                 }
             }
 
-            SettingsCard(title = "Danger zone") {
-                OutlinedButton(
-                    onClick = { showClearDialog = true },
-                    modifier = Modifier.fillMaxWidth()
-                ) { Text("Clear OTP history") }
+            SettingsCard(title = "Danger") {
+                TextButton(onClick = { showClearDialog = true }) {
+                    Text("Clear history", color = MaterialTheme.colorScheme.error)
+                }
                 if (pairedDevices.isNotEmpty()) {
-                    OutlinedButton(
-                        onClick = { showUnpairAll = true },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = MaterialTheme.colorScheme.error
-                        )
-                    ) { Text("Unpair all devices") }
+                    TextButton(onClick = { showUnpairAll = true }) {
+                        Text("Unpair all devices", color = MaterialTheme.colorScheme.error)
+                    }
                 }
             }
         }
@@ -275,25 +269,29 @@ internal fun MadeByAlok() {
 
 @Composable
 private fun SettingsCard(title: String, content: @Composable ColumnScope.() -> Unit) {
-    Surface(
-        shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            Text(
-                title.uppercase(),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontWeight = FontWeight.SemiBold
-            )
-            content()
-        }
+        Text(
+            title,
+            fontSize = 14.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        content()
+    }
+}
+
+@Composable
+private fun PillButton(text: String, onClick: () -> Unit) {
+    Button(
+        onClick = onClick,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(48.dp),
+        shape = RoundedCornerShape(50)
+    ) {
+        Text(text, fontWeight = FontWeight.SemiBold)
     }
 }
 

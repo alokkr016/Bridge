@@ -70,15 +70,7 @@ struct IncomingCallView: View {
                             .font(.system(size: 13, weight: .bold))
                             .foregroundStyle(.white)
                             .frame(width: 32, height: 32)
-                            .background(
-                                LinearGradient(
-                                    colors: [Color.green, Color.green.opacity(0.85)],
-                                    startPoint: .top,
-                                    endPoint: .bottom
-                                ),
-                                in: Circle()
-                            )
-                            .shadow(color: Color.green.opacity(0.35), radius: 4, x: 0, y: 2)
+                            .background(Color.green, in: Circle())
                     }
                     .buttonStyle(.plain)
                 }
@@ -88,15 +80,7 @@ struct IncomingCallView: View {
                         .font(.system(size: 13, weight: .bold))
                         .foregroundStyle(.white)
                         .frame(width: 32, height: 32)
-                        .background(
-                            LinearGradient(
-                                colors: [Color.red, Color.red.opacity(0.85)],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            ),
-                            in: Circle()
-                        )
-                        .shadow(color: Color.red.opacity(0.35), radius: 4, x: 0, y: 2)
+                        .background(Color.red, in: Circle())
                 }
                 .buttonStyle(.plain)
             }

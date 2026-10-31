@@ -16,14 +16,18 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import com.google.zxing.*
@@ -63,15 +67,26 @@ fun PairingScreen(
         }
     }
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Scan QR Code") },
-        text = {
-            Column {
-                Text("Point your camera at the QR code on your Mac")
-                Spacer(modifier = Modifier.height(16.dp))
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .statusBarsPadding()
+            .navigationBarsPadding()
+            .padding(horizontal = 24.dp)
+    ) {
+        TextButton(onClick = onDismiss, modifier = Modifier.padding(top = 8.dp)) {
+            Text("Close", color = MaterialTheme.colorScheme.onSurface)
+        }
+        Text("Scan", fontSize = 32.sp, fontWeight = FontWeight.SemiBold)
+        Text(
+            "Point the camera at the code on your Mac.",
+            fontSize = 16.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 8.dp, bottom = 20.dp)
+        )
 
-                if (hasCameraPermission) {
+        if (hasCameraPermission) {
                     AndroidView(
                         factory = { ctx ->
                             val previewView = PreviewView(ctx)
@@ -162,24 +177,21 @@ fun PairingScreen(
                         },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(300.dp)
+                            .height(360.dp)
+                            .clip(RoundedCornerShape(16.dp))
                     )
                 } else {
-                    Text("Camera permission required")
+                    Text(
+                        "Camera permission is required to scan the code.",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
 
                 errorMessage?.let {
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
                     Text(it, color = MaterialTheme.colorScheme.error)
                 }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        }
-    )
+    }
 }
 
 private fun toBitmap(imageProxy: ImageProxy): Bitmap? {
