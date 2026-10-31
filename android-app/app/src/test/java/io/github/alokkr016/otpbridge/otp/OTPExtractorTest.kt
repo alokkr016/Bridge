@@ -20,6 +20,16 @@ class OTPExtractorTest {
     }
 
     @Test
+    fun readsCodesThatAreNotWrittenAsLabelThenIs() {
+        assertEquals("482910", OTPExtractor.extractOTP("HDFC", "OTP for login is 482910")?.otp)
+        assertEquals("123456", OTPExtractor.extractOTP("HDFC", "OTP for Rs 5000 is 123456")?.otp)
+        assertEquals("843921", OTPExtractor.extractOTP("Bank", "843921 is your OTP")?.otp)
+        assertEquals("847291", OTPExtractor.extractOTP("Bank", "847291 is OTP for txn")?.otp)
+        assertEquals("654321", OTPExtractor.extractOTP("App", "OTP 654321")?.otp)
+        assertEquals("111222", OTPExtractor.extractOTP("WhatsApp", "111222 is your verification code")?.otp)
+    }
+
+    @Test
     fun bareTitleIsOptIn() {
         assertNull(OTPExtractor.extractOTP("706594", "SMS from Bigbasket", allowBareTitle = false))
         assertEquals("706594", OTPExtractor.extractOTP("706594", "SMS from Bigbasket", allowBareTitle = true)?.otp)
