@@ -7,6 +7,10 @@ enum Brand {
     static let ink = Color(white: 237.0 / 255.0)
     static let muted = Color(white: 161.0 / 255.0)
     static let live = Color.red
+    static let indigo = Color(red: 78 / 255, green: 75 / 255, blue: 166 / 255)
+    static let orange = Color(red: 1, green: 138 / 255, blue: 61 / 255)
+    static let teal = Color(red: 184 / 255, green: 232 / 255, blue: 224 / 255)
+    static let rose = Color(red: 225 / 255, green: 29 / 255, blue: 72 / 255)
 }
 
 struct BlinkRed: ViewModifier {

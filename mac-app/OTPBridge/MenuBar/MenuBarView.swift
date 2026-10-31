@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 struct OTPItem: Identifiable {
     let id = UUID()
@@ -16,8 +17,69 @@ struct MenuBarView: View {
     @State private var serverConnected = WebSocketServer.shared.isConnected
     @State private var copiedOTP: String?
     @State private var hoveredID: UUID?
+    @State private var showSettings = false
 
     var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            if showSettings {
+                settingsPane
+            } else {
+                codePane
+            }
+            credit
+        }
+        .frame(width: 340)
+        .foregroundStyle(Brand.ink)
+        .preferredColorScheme(.dark)
+        .background { trayBackground }
+        .background { MenuBarWindowClearer() }
+        .onAppear {
+            loadRecentOTPs()
+            setupCallbacks()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: otpReceivedNotification)) { note in
+            if let otp = note.userInfo?["otp"] as? String {
+                withAnimation { copiedOTP = otp }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                    if copiedOTP == otp { withAnimation { copiedOTP = nil } }
+                }
+                loadRecentOTPs()
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: connectionChangedNotification)) { note in
+            if let connected = note.userInfo?["connected"] as? Bool {
+                serverConnected = connected
+            }
+        }
+    }
+
+    // MARK: - Glass
+
+    private var trayBackground: some View {
+        ZStack {
+            TrayGlass()
+            Circle()
+                .fill(Brand.indigo.opacity(0.55))
+                .frame(width: 200, height: 200)
+                .blur(radius: 46)
+                .offset(x: -110, y: -80)
+            Circle()
+                .fill(Brand.teal.opacity(0.38))
+                .frame(width: 170, height: 170)
+                .blur(radius: 40)
+                .offset(x: 120, y: 40)
+            Circle()
+                .fill(Brand.orange.opacity(0.28))
+                .frame(width: 120, height: 120)
+                .blur(radius: 36)
+                .offset(x: 10, y: 90)
+        }
+        .allowsHitTesting(false)
+    }
+
+    // MARK: - Codes
+
+    private var codePane: some View {
         VStack(alignment: .leading, spacing: 0) {
             header
 
@@ -45,28 +107,6 @@ struct MenuBarView: View {
             hairline
             footer
         }
-        .frame(width: 340)
-        .background(Brand.canvas)
-        .foregroundStyle(Brand.ink)
-        .preferredColorScheme(.dark)
-        .onAppear {
-            loadRecentOTPs()
-            setupCallbacks()
-        }
-        .onReceive(NotificationCenter.default.publisher(for: otpReceivedNotification)) { note in
-            if let otp = note.userInfo?["otp"] as? String {
-                withAnimation { copiedOTP = otp }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                    if copiedOTP == otp { withAnimation { copiedOTP = nil } }
-                }
-                loadRecentOTPs()
-            }
-        }
-        .onReceive(NotificationCenter.default.publisher(for: connectionChangedNotification)) { note in
-            if let connected = note.userInfo?["connected"] as? Bool {
-                serverConnected = connected
-            }
-        }
     }
 
     private var hairline: some View {
@@ -76,22 +116,18 @@ struct MenuBarView: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(alignment: .firstTextBaseline) {
-                Text("Bridge")
-                    .font(.system(size: 22, weight: .semibold))
-                Spacer()
-                if serverConnected {
-                    Text("Live")
-                        .font(.system(size: 13, weight: .medium))
-                        .blinkRed()
-                } else {
-                    Text("Offline")
-                        .font(.system(size: 13))
-                        .foregroundStyle(Brand.muted)
-                }
+        HStack(alignment: .firstTextBaseline) {
+            Text("Bridge")
+                .font(.system(size: 22, weight: .semibold))
+            Spacer()
+            HStack(spacing: 6) {
+                Circle()
+                    .fill(serverConnected ? Color.green : Color.white.opacity(0.35))
+                    .frame(width: 6, height: 6)
+                Text(serverConnected ? "Live" : "Offline")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(serverConnected ? Color.green : Brand.muted)
             }
-            MadeByAlok()
         }
         .padding(.horizontal, 22)
         .padding(.top, 18)
@@ -104,12 +140,18 @@ struct MenuBarView: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text("\(item.source)  ·  \(relativeTime(item.date))")
                     .font(.system(size: 13))
-                    .foregroundStyle(Brand.muted)
+                    .foregroundStyle(Brand.teal.opacity(0.9))
                     .lineLimit(1)
                 Button(action: { copyOTP(item.otp) }) {
                     Text(grouped(item.otp))
-                        .font(.system(size: 48, weight: .semibold))
-                        .foregroundStyle(Brand.ink)
+                        .font(.system(size: 40, weight: .semibold))
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [.white, Color(red: 0.78, green: 0.88, blue: 1)],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
                         .monospacedDigit()
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .contentShape(Rectangle())
@@ -176,7 +218,7 @@ struct MenuBarView: View {
             .padding(.horizontal, 22)
             .padding(.vertical, 10)
             .frame(maxWidth: .infinity)
-            .background(isHovered ? Color.white.opacity(0.04) : Color.clear)
+            .background(isHovered ? Color.white.opacity(0.06) : Color.clear)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -188,9 +230,7 @@ struct MenuBarView: View {
 
     private var footer: some View {
         HStack {
-            Button(action: {
-                NotificationCenter.default.post(name: openSettingsNotification, object: nil)
-            }) {
+            Button(action: { withAnimation(.easeOut(duration: 0.18)) { showSettings = true } }) {
                 Text("Settings")
                     .font(.system(size: 13, weight: .medium))
                     .foregroundStyle(Brand.ink)
@@ -209,6 +249,49 @@ struct MenuBarView: View {
         .padding(.horizontal, 22)
         .padding(.vertical, 14)
     }
+
+    // MARK: - Settings in the tray
+
+    private var settingsPane: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack {
+                Button(action: { withAnimation(.easeOut(duration: 0.18)) { showSettings = false } }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 12, weight: .semibold))
+                        Text("Settings")
+                            .font(.system(size: 15, weight: .semibold))
+                    }
+                    .foregroundStyle(Brand.ink)
+                }
+                .buttonStyle(.plain)
+                Spacer()
+            }
+            .padding(.horizontal, 18)
+            .padding(.top, 14)
+            .padding(.bottom, 6)
+
+            SettingsWindow(embedded: true)
+        }
+    }
+
+    private var credit: some View {
+        HStack(spacing: 0) {
+            Text("Made with ")
+            Text("♥")
+                .foregroundStyle(Brand.rose)
+            Text(" by ")
+            Link("Alok", destination: URL(string: "https://github.com/alokkr016")!)
+                .foregroundStyle(Brand.ink)
+        }
+        .font(.system(size: 11))
+        .foregroundStyle(Brand.muted)
+        .frame(maxWidth: .infinity)
+        .padding(.top, 2)
+        .padding(.bottom, 12)
+    }
+
+    // MARK: - Helpers
 
     private func grouped(_ otp: String) -> String {
         guard otp.count == 6, otp.allSatisfy(\.isNumber) else { return otp }
@@ -242,5 +325,33 @@ struct MenuBarView: View {
 
     private func setupCallbacks() {
         serverConnected = WebSocketServer.shared.isConnected
+    }
+}
+
+/// Frosted panel. Blurs whatever is behind the menu window.
+private struct TrayGlass: NSViewRepresentable {
+    func makeNSView(context: Context) -> NSVisualEffectView {
+        let view = NSVisualEffectView()
+        view.material = .hudWindow
+        view.blendingMode = .behindWindow
+        view.state = .active
+        view.isEmphasized = true
+        return view
+    }
+
+    func updateNSView(_ nsView: NSVisualEffectView, context: Context) {}
+}
+
+/// MenuBarExtra paints an opaque window. Clear it so the blur can show through.
+private struct MenuBarWindowClearer: NSViewRepresentable {
+    func makeNSView(context: Context) -> NSView { NSView() }
+
+    func updateNSView(_ nsView: NSView, context: Context) {
+        DispatchQueue.main.async {
+            guard let window = nsView.window else { return }
+            window.isOpaque = false
+            window.backgroundColor = .clear
+            window.hasShadow = true
+        }
     }
 }

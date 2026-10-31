@@ -6,6 +6,9 @@ let openSettingsNotification = Notification.Name("openSettings")
 /// (see FeatureSettings), so turning one off stops the traffic, not just the UI.
 struct SettingsWindow: View {
 
+    /// Shown inside the menu-bar panel instead of a separate window.
+    var embedded: Bool = false
+
     @ObservedObject private var settings = FeatureSettings.shared
     @ObservedObject private var updater = UpdaterManager.shared
     @State private var chimeEnabled = SoundManager.shared.isEnabled
@@ -16,9 +19,11 @@ struct SettingsWindow: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                Text("Settings")
-                    .font(.system(size: 28, weight: .semibold))
-                    .padding(.bottom, 22)
+                if !embedded {
+                    Text("Settings")
+                        .font(.system(size: 28, weight: .semibold))
+                        .padding(.bottom, 22)
+                }
 
                 sectionLabel("Features")
                 toggleRow(
@@ -58,7 +63,11 @@ struct SettingsWindow: View {
                     NotificationCenter.default.post(name: openDashboardNotification, object: nil)
                 }
                 actionRow("Pair a device") {
-                    showPairing = true
+                    if embedded {
+                        NotificationCenter.default.post(name: openPairingNotification, object: nil)
+                    } else {
+                        showPairing = true
+                    }
                 }
 
                 sectionLabel("Updates")
@@ -75,8 +84,10 @@ struct SettingsWindow: View {
                     .disabled(updater.isChecking)
                 }
                 infoLine("Version", value: UpdaterManager.currentVersion)
-                MadeByAlok()
-                    .padding(.vertical, 12)
+                if !embedded {
+                    MadeByAlok()
+                        .padding(.vertical, 12)
+                }
 
                 sectionLabel("Danger")
                     .padding(.top, 18)
@@ -95,12 +106,13 @@ struct SettingsWindow: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.top, 22)
             }
-            .padding(.horizontal, 28)
-            .padding(.top, 36)
-            .padding(.bottom, 28)
+            .padding(.horizontal, embedded ? 16 : 28)
+            .padding(.top, embedded ? 8 : 36)
+            .padding(.bottom, embedded ? 12 : 28)
         }
-        .frame(width: 440, height: 620)
-        .background(Brand.canvas)
+        .frame(width: embedded ? nil : 440, height: embedded ? 420 : 620)
+        .frame(maxWidth: .infinity)
+        .background(embedded ? Color.clear : Brand.canvas)
         .foregroundStyle(Brand.ink)
         .preferredColorScheme(.dark)
         .sheet(isPresented: $showPairing) {
@@ -145,7 +157,7 @@ struct SettingsWindow: View {
                 Toggle("", isOn: isOn)
                     .labelsHidden()
                     .toggleStyle(.switch)
-                    .tint(.white)
+                    .tint(embedded ? Brand.indigo : .white)
                     .controlSize(.small)
                     .accessibilityLabel(title)
             }
