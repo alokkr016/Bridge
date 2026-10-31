@@ -48,6 +48,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     packaging {
@@ -97,6 +98,9 @@ dependencies {
 
     // DataStore (for pairing prefs)
     implementation("androidx.datastore:datastore-preferences:1.0.0")
+
+    // Keystore-backed encryption for identity keys and paired secrets
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
 
     // WorkManager — periodic watchdog to restart the foreground service if Samsung kills it
     implementation("androidx.work:work-runtime-ktx:2.9.0")

@@ -37,6 +37,9 @@ class UpdateManager(private val context: Context) {
             val latestVersionCode = json.getInt("versionCode")
             val latestVersionName = json.getString("versionName")
             val apkUrl = json.getString("apkUrl")
+            if (!isAllowedUpdateUrl(apkUrl)) {
+                return@withContext UpdateInfo(false, 0, "", "", "")
+            }
             val notes = json.optString("notes", "")
             
             val currentVersionCode = getCurrentVersionCode()
@@ -69,6 +72,7 @@ class UpdateManager(private val context: Context) {
     }
 
     suspend fun downloadAndInstallApk(apkUrl: String, onProgress: (Float) -> Unit): Boolean = withContext(Dispatchers.IO) {
+        if (!isAllowedUpdateUrl(apkUrl)) return@withContext false
         try {
             val url = URL(apkUrl)
             val connection = url.openConnection() as HttpURLConnection
@@ -97,6 +101,10 @@ class UpdateManager(private val context: Context) {
                 }
             }
 
+            if (!signatureMatchesInstalled(apkFile)) {
+                apkFile.delete()
+                return@withContext false
+            }
             installApk(apkFile)
             true
         } catch (e: Exception) {
@@ -115,5 +123,45 @@ class UpdateManager(private val context: Context) {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
         context.startActivity(intent)
+    }
+
+    private fun isAllowedUpdateUrl(raw: String): Boolean {
+        val url = try {
+            URL(raw)
+        } catch (_: Exception) {
+            return false
+        }
+        if (!url.protocol.equals("https", ignoreCase = true)) return false
+        val host = url.host.lowercase()
+        if (host == "bridge-updater.alokraj016.workers.dev") return true
+        return host == "github.com" || host.endsWith(".githubusercontent.com")
+    }
+
+    private fun signatureMatchesInstalled(apk: File): Boolean {
+        val flags = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+            android.content.pm.PackageManager.GET_SIGNING_CERTIFICATES
+        } else {
+            @Suppress("DEPRECATION")
+            android.content.pm.PackageManager.GET_SIGNATURES
+        }
+        val installed = try {
+            context.packageManager.getPackageInfo(context.packageName, flags)
+        } catch (_: Exception) {
+            return false
+        }
+        val incoming = context.packageManager.getPackageArchiveInfo(apk.absolutePath, flags) ?: return false
+        val installedSigs = signaturesOf(installed)
+        val incomingSigs = signaturesOf(incoming)
+        return installedSigs.isNotEmpty() && installedSigs == incomingSigs
+    }
+
+    private fun signaturesOf(info: android.content.pm.PackageInfo): Set<String> {
+        val raw = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+            info.signingInfo?.apkContentsSigners?.map { it.toCharsString() }
+        } else {
+            @Suppress("DEPRECATION")
+            info.signatures?.map { it.toCharsString() }
+        }
+        return raw?.toSet().orEmpty()
     }
 }

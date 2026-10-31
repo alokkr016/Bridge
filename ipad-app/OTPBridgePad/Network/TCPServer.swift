@@ -19,6 +19,10 @@ final class TCPServer {
     private var sharedSecret: Data?
     private let cryptoManager = CryptoManager.shared
     private let pairingManager = PairingManager.shared
+    private let keyPairStore = KeyPairStore()
+    /// Orders sequence allocation with the bytes on the wire. A later frame
+    /// must not overtake an earlier one or the phone treats it as a replay.
+    private let sendQueue = DispatchQueue(label: "io.github.alokkr016.otpbridge.pad.send")
 
     var onOTPReceived: ((String, String, String?, TimeInterval) -> Void)?
     var onClipboardReceived: ((String) -> Void)?
@@ -115,6 +119,11 @@ final class TCPServer {
     }
 
     private func handleNewConnection(_ newConnection: NWConnection) {
+        guard isPrivateLan(newConnection) else {
+            NSLog("[BridgePad] Rejected connection from a non-local address")
+            newConnection.cancel()
+            return
+        }
         connection?.cancel()
         connection = newConnection
         // A new socket must re-handshake; keep the stored secret as a fallback
@@ -122,6 +131,29 @@ final class TCPServer {
         isConnected = false
         newConnection.start(queue: .global())
         readLoop(connection: newConnection)
+    }
+
+    private func isPrivateLan(_ connection: NWConnection) -> Bool {
+        guard case let .hostPort(host, _) = connection.endpoint else { return false }
+        switch host {
+        case .ipv4(let address):
+            return Self.isPrivateIPv4(String(describing: address))
+        case .ipv6(let address):
+            let text = String(describing: address).lowercased()
+            return text == "::1" || text.hasPrefix("fe80") || text.hasPrefix("fc") || text.hasPrefix("fd")
+        default:
+            return false
+        }
+    }
+
+    private static func isPrivateIPv4(_ text: String) -> Bool {
+        let parts = text.split(separator: ".").compactMap { Int($0) }
+        guard parts.count == 4, parts.allSatisfy({ (0...255).contains($0) }) else { return false }
+        if parts[0] == 10 || parts[0] == 127 { return true }
+        if parts[0] == 192 && parts[1] == 168 { return true }
+        if parts[0] == 172 && (16...31).contains(parts[1]) { return true }
+        if parts[0] == 169 && parts[1] == 254 { return true }
+        return false
     }
 
     /// Only the current connection may flip state — a cancelled predecessor's
@@ -191,17 +223,20 @@ final class TCPServer {
             return
         }
         do {
-            let decrypted = try cryptoManager.decrypt(ciphertext: data, key: secret)
-            guard let json = try JSONSerialization.jsonObject(with: decrypted) as? [String: Any],
+            let opened = try cryptoManager.openFrame(ciphertext: data, key: secret)
+            guard keyPairStore.acceptRecvSeq(opened.seq) else {
+                NSLog("[BridgePad] Rejected replayed frame")
+                return
+            }
+            guard let json = try JSONSerialization.jsonObject(with: opened.body) as? [String: Any],
                   let type = json["type"] as? String else { return }
             route(type: type, json: json)
         } catch {
-            // Stored secret no longer matches — the phone re-paired or cleared
-            // data. Reset and try treating this frame as a fresh handshake.
-            NSLog("[BridgePad] Decrypt failed (\(error)) — attempting re-handshake")
+            NSLog("[BridgePad] Decrypt failed (\(error)) — closing connection")
+            connection?.cancel()
+            connection = nil
             sharedSecret = nil
             isConnected = false
-            handleHandshake(data)
         }
     }
 
@@ -286,6 +321,10 @@ final class TCPServer {
 
     /// Frames and sends raw bytes: [4-byte big-endian length][payload].
     func sendBinary(_ data: Data) {
+        sendQueue.sync { writeFrame(data) }
+    }
+
+    private func writeFrame(_ data: Data) {
         guard let conn = connection else { return }
         var framed = Data()
         let len = UInt32(data.count)
@@ -302,11 +341,15 @@ final class TCPServer {
     /// Sends the iPad's clipboard to the phone (encrypted), matching the Mac.
     func sendClipboard(_ text: String) {
         guard let secret = sharedSecret else { return }
-        do {
-            let payload = try JSONSerialization.data(withJSONObject: ["type": "clipboard", "text": text])
-            sendBinary(try cryptoManager.encrypt(plaintext: payload, key: secret))
-        } catch {
-            NSLog("[BridgePad] Failed to send clipboard: \(error)")
+        sendQueue.sync {
+            do {
+                let payload = try JSONSerialization.data(withJSONObject: ["type": "clipboard", "text": text])
+                let seq = keyPairStore.allocateSendSeq()
+                let sealed = try cryptoManager.seal(plaintext: payload, key: secret, seq: seq)
+                writeFrame(sealed)
+            } catch {
+                NSLog("[BridgePad] Failed to send clipboard: \(error)")
+            }
         }
     }
 }

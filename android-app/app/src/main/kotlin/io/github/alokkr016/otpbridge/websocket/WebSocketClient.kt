@@ -113,7 +113,7 @@ class WebSocketClient private constructor(private val context: Context) {
         val now = System.currentTimeMillis()
         val lastSent = recentlySentOTPs[dedupKey] ?: 0L
         if (now - lastSent < 10_000L) {
-            Log.d(TAG, "Duplicate OTP suppressed: ${otpMessage.otp}")
+            Log.d(TAG, "Duplicate OTP suppressed")
             return
         }
         recentlySentOTPs[dedupKey] = now
@@ -124,7 +124,7 @@ class WebSocketClient private constructor(private val context: Context) {
             for (peer in ready) {
                 peer.sendEncrypted(jsonBytes)
             }
-            Log.d(TAG, "OTP sent to ${ready.size} peer(s): ${otpMessage.otp}")
+            Log.d(TAG, "OTP sent to ${ready.size} peer(s), length=${otpMessage.otp.length}")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to send OTP: ${e.message}")
         }
@@ -162,6 +162,7 @@ class WebSocketClient private constructor(private val context: Context) {
         private var pingJob: Job? = null
         private var reconnectJob: Job? = null
         private var connectJob: Job? = null
+        private val writeLock = Any()
         @Volatile private var lastHeardAt = 0L
 
         fun isKeyRejected(): Boolean =
@@ -226,7 +227,8 @@ class WebSocketClient private constructor(private val context: Context) {
                     publicKey = java.util.Base64.getEncoder().encodeToString(rawPubKey),
                     token = device.pairingToken
                 )
-                sendFrame(json.encodeToString(handshake).toByteArray())
+                val frame = json.encodeToString(handshake).toByteArray()
+                synchronized(writeLock) { sendFrame(frame) }
                 Log.d(TAG, "[${device.deviceId.take(8)}] Handshake sent")
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to send handshake: ${e.message}")
@@ -256,8 +258,12 @@ class WebSocketClient private constructor(private val context: Context) {
         private suspend fun handlePayload(payload: ByteArray) {
             if (handshakeComplete && sharedSecret != null) {
                 try {
-                    val decrypted = cryptoManager.decrypt(payload, sharedSecret!!)
-                    val message = String(decrypted)
+                    val opened = cryptoManager.open(payload, sharedSecret!!)
+                    if (!keyPairStore.acceptRecvSeq(device.deviceId, opened.seq)) {
+                        Log.w(TAG, "[${device.deviceId.take(8)}] Rejected replayed frame")
+                        return
+                    }
+                    val message = String(opened.body)
                     val msgJson = org.json.JSONObject(message)
                     when (msgJson.optString("type")) {
                         "otp" -> {
@@ -323,6 +329,10 @@ class WebSocketClient private constructor(private val context: Context) {
                             return
                         }
                         handshakeComplete = true
+                        if (!device.pairingToken.isNullOrEmpty()) {
+                            keyPairStore.clearPairingToken(device.deviceId)
+                            device = device.copy(pairingToken = null)
+                        }
                         Log.d(TAG, "[${device.deviceId.take(8)}] Handshake complete")
                         publishConnection()
                     }
@@ -342,8 +352,10 @@ class WebSocketClient private constructor(private val context: Context) {
                         break
                     }
                     try {
-                        output?.write(byteArrayOf(0, 0, 0, 0))
-                        output?.flush()
+                        synchronized(writeLock) {
+                            output?.write(byteArrayOf(0, 0, 0, 0))
+                            output?.flush()
+                        }
                     } catch (e: Exception) {
                         Log.e(TAG, "[${device.deviceId.take(8)}] Ping failed: ${e.message}")
                         if (socket != null) handleDisconnect()
@@ -357,7 +369,14 @@ class WebSocketClient private constructor(private val context: Context) {
             val secret = sharedSecret ?: return
             scope.launch {
                 try {
-                    sendFrame(cryptoManager.encrypt(plain, secret))
+                    // Sequence number and bytes go out together. Allocating
+                    // outside the lock let a later frame overtake an earlier
+                    // one, and the receiver then dropped the late one as a replay.
+                    synchronized(writeLock) {
+                        val seq = keyPairStore.allocateSendSeq(device.deviceId)
+                        val frame = cryptoManager.seal(plain, secret, seq)
+                        sendFrame(frame)
+                    }
                 } catch (e: Exception) {
                     Log.e(TAG, "[${device.deviceId.take(8)}] Send failed: ${e.message}")
                 }

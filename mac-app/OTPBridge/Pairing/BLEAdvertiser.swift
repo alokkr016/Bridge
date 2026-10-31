@@ -133,6 +133,18 @@ class BLEAdvertiser: NSObject {
         lastAdvertisedIP = ip
         NSLog("[BLEAdvertiser] Advertising \(name) (\(ip))")
     }
+
+    fileprivate func signedDiscovery(ip: String) -> String {
+        Self.signedDiscoveryPayload(ip: ip)
+    }
+
+    fileprivate static func signedDiscoveryPayload(ip: String) -> String {
+        let id = CryptoManager.shared.getDeviceId()
+        if let secret = PairingManager.shared.getPairedDevice()?.sharedSecret {
+            return SessionCrypto.signedBeacon(ip: ip, port: 8420, deviceId: id, secret: secret)
+        }
+        return "OTPBRIDGE \(ip) 8420 \(id) \(String(repeating: "0", count: 64))"
+    }
 }
 
 extension BLEAdvertiser: CBPeripheralManagerDelegate {
@@ -162,7 +174,7 @@ extension BLEAdvertiser: CBPeripheralManagerDelegate {
             return
         }
         let ip = LocalAddress.ipv4() ?? "0.0.0.0"
-        let payload = "OTPBRIDGE \(ip) 8420 \(CryptoManager.shared.getDeviceId())"
+        let payload = signedDiscovery(ip: ip)
         let data = Data(payload.utf8)
         guard request.offset <= data.count else {
             peripheral.respond(to: request, withResult: .invalidOffset)
@@ -201,7 +213,7 @@ final class LanBeacon {
 
     private func send() {
         guard let ip = LocalAddress.ipv4() else { return }
-        let payload = "OTPBRIDGE \(ip) 8420 \(CryptoManager.shared.getDeviceId())"
+        let payload = BLEAdvertiser.signedDiscoveryPayload(ip: ip)
         guard let data = payload.data(using: .utf8) else { return }
         // Global broadcast + /24 directed broadcast (some APs drop 255.255.255.255).
         send(data, to: "255.255.255.255")

@@ -79,7 +79,7 @@ final class LanBeacon {
 
     private func send() {
         guard let ip = LocalAddress.ipv4() else { return }
-        let payload = "OTPBRIDGE \(ip) 8420 \(CryptoManager.shared.getDeviceId())"
+        let payload = signedDiscovery(ip: ip)
         guard let data = payload.data(using: .utf8) else { return }
         // Global broadcast plus the /24 directed broadcast — some APs drop
         // 255.255.255.255 but forward the directed form.
@@ -87,6 +87,14 @@ final class LanBeacon {
         if let slash24 = directedBroadcast(for: ip) {
             sendDatagram(data, to: slash24)
         }
+    }
+
+    private func signedDiscovery(ip: String) -> String {
+        let id = CryptoManager.shared.getDeviceId()
+        if let secret = PairingManager.shared.getPairedDevice()?.sharedSecret {
+            return SessionCrypto.signedBeacon(ip: ip, port: 8420, deviceId: id, secret: secret)
+        }
+        return "OTPBRIDGE \(ip) 8420 \(id) \(String(repeating: "0", count: 64))"
     }
 
     private func directedBroadcast(for ip: String) -> String? {
