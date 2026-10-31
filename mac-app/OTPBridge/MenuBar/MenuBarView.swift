@@ -73,8 +73,13 @@ struct MenuBarView: View {
                 .scaledToFit()
                 .frame(width: 20, height: 20)
                 .clipShape(RoundedRectangle(cornerRadius: 5))
-            Text("Bridge")
-                .font(.system(size: 13, weight: .semibold))
+            VStack(alignment: .leading, spacing: 1) {
+                Text("Bridge")
+                    .font(.system(size: 13, weight: .semibold))
+                Text("Made with ♥ by [Alok](https://github.com/alokkr016)")
+                    .font(.system(size: 10))
+                    .foregroundStyle(.secondary)
+            }
 
             Spacer()
 
