@@ -16,22 +16,30 @@ struct ConnectionDashboard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            header
-            Divider()
             ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: 0) {
+                    Text("Connection")
+                        .font(.system(size: 28, weight: .semibold))
+                    Text(isConnected ? "Live" : "Offline")
+                        .font(.system(size: 13))
+                        .foregroundStyle(Brand.muted)
+                        .padding(.top, 6)
+                        .padding(.bottom, 22)
+
                     connectionSection
-                    Divider()
                     deviceSection
-                    Divider()
+                        .padding(.top, 18)
                     diagnosticsSection
-                    Divider()
+                        .padding(.top, 18)
                     statsSection
+                        .padding(.top, 18)
                 }
-                .padding(20)
+                .padding(.horizontal, 28)
+                .padding(.top, 36)
+                .padding(.bottom, 28)
             }
         }
-        .frame(width: 420, height: 520)
+        .frame(width: 440, height: 560)
         .background(Brand.canvas)
         .foregroundStyle(Brand.ink)
         .preferredColorScheme(.dark)
@@ -56,36 +64,6 @@ struct ConnectionDashboard: View {
     }
 
     // MARK: - Header
-
-    private var header: some View {
-        HStack(spacing: 10) {
-            Image("Logo")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 22, height: 22)
-                .clipShape(RoundedRectangle(cornerRadius: 5))
-            Text("Connection Dashboard")
-                .font(.system(size: 14, weight: .semibold))
-            Spacer()
-            statusPill
-        }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 14)
-    }
-
-    private var statusPill: some View {
-        HStack(spacing: 5) {
-            Circle()
-                .fill(isConnected ? Color.green : Color.red)
-                .frame(width: 7, height: 7)
-            Text(isConnected ? "Connected" : "Offline")
-                .font(.system(size: 11, weight: .medium))
-                .foregroundStyle(isConnected ? .green : .red)
-        }
-        .padding(.horizontal, 9)
-        .padding(.vertical, 4)
-        .background(Capsule().fill(isConnected ? Color.green.opacity(0.1) : Color.red.opacity(0.1)))
-    }
 
     // MARK: - Connection Section
 
@@ -121,42 +99,34 @@ struct ConnectionDashboard: View {
             sectionTitle("Diagnostics")
             HStack(spacing: 10) {
                 Button(action: ping) {
-                    HStack(spacing: 6) {
-                        Image(systemName: isPinging ? "arrow.trianglehead.2.clockwise" : "antenna.radiowaves.left.and.right")
-                            .font(.system(size: 11))
-                        Text(isPinging ? "Pinging…" : "Ping")
-                            .font(.system(size: 12, weight: .medium))
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 7)
+                    Text(isPinging ? "Pinging" : "Ping")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(.black)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 36)
+                        .background(Color.white, in: Capsule())
                 }
-                .buttonStyle(.bordered)
+                .buttonStyle(.plain)
                 .disabled(!isConnected || isPinging)
+                .opacity(!isConnected || isPinging ? 0.4 : 1)
 
                 Button(action: sendTestOTP) {
-                    HStack(spacing: 6) {
-                        Image(systemName: "paperplane")
-                            .font(.system(size: 11))
-                        Text("Send Test OTP")
-                            .font(.system(size: 12, weight: .medium))
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 7)
+                    Text("Send a test code")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(Brand.ink)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 36)
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.plain)
                 .disabled(!isConnected)
+                .opacity(isConnected ? 1 : 0.4)
             }
 
             if let status = testOTPStatus {
-                HStack(spacing: 6) {
-                    Image(systemName: status.hasPrefix("✓") ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
-                        .foregroundStyle(status.hasPrefix("✓") ? .green : .orange)
-                        .font(.system(size: 12))
-                    Text(status)
-                        .font(.system(size: 12))
-                        .foregroundStyle(.secondary)
-                }
-                .transition(.opacity)
+                Text(status)
+                    .font(.system(size: 13))
+                    .foregroundStyle(Brand.muted)
+                    .transition(.opacity)
             }
         }
     }
@@ -178,29 +148,28 @@ struct ConnectionDashboard: View {
     // MARK: - Helpers
 
     private func sectionTitle(_ title: String) -> some View {
-        Text(title.uppercased())
-            .font(.system(size: 10, weight: .semibold))
-            .foregroundStyle(.tertiary)
-            .tracking(0.5)
+        Text(title)
+            .font(.system(size: 13))
+            .foregroundStyle(Brand.muted)
+            .padding(.bottom, 6)
     }
 
-    private func infoRow(_ label: String, value: String, valueColor: Color = .primary) -> some View {
+    private func infoRow(_ label: String, value: String, valueColor: Color = Brand.ink) -> some View {
         HStack {
             Text(label)
-                .font(.system(size: 12))
-                .foregroundStyle(.secondary)
-                .frame(width: 130, alignment: .leading)
-            Text(value)
-                .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(valueColor)
+                .font(.system(size: 15))
+                .foregroundStyle(Brand.ink)
             Spacer()
+            Text(value)
+                .font(.system(size: 15))
+                .foregroundStyle(valueColor == Brand.ink ? Brand.muted : valueColor)
+                .textSelection(.enabled)
         }
+        .padding(.vertical, 8)
     }
 
     private func latencyColor(_ ms: Double) -> Color {
-        if ms < 20 { return .green }
-        if ms < 60 { return .yellow }
-        return .red
+        Brand.ink
     }
 
     private func relativeTime(_ date: Date) -> String {

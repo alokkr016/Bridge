@@ -111,13 +111,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 return
             }
             let window = NSWindow(
-                contentRect: NSRect(x: 0, y: 0, width: 420, height: 520),
+                contentRect: NSRect(x: 0, y: 0, width: 440, height: 560),
                 styleMask: [.titled, .closable],
                 backing: .buffered,
                 defer: false
             )
             window.isReleasedWhenClosed = false
-            window.title = "Bridge — Dashboard"
+            self?.styleAsCanvas(window)
             window.contentView = NSHostingView(rootView: ConnectionDashboard())
             window.center()
             window.makeKeyAndOrderFront(nil)
@@ -135,13 +135,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
 
             let window = NSWindow(
-                contentRect: NSRect(x: 0, y: 0, width: 420, height: 560),
+                contentRect: NSRect(x: 0, y: 0, width: 440, height: 620),
                 styleMask: [.titled, .closable],
                 backing: .buffered,
                 defer: false
             )
             window.isReleasedWhenClosed = false
-            window.title = "Bridge Settings"
+            self?.styleAsCanvas(window)
             window.contentView = NSHostingView(rootView: SettingsWindow())
             window.center()
             window.makeKeyAndOrderFront(nil)
@@ -159,18 +159,26 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
 
             let window = NSWindow(
-                contentRect: NSRect(x: 0, y: 0, width: 380, height: 500),
+                contentRect: NSRect(x: 0, y: 0, width: 380, height: 560),
                 styleMask: [.titled, .closable],
                 backing: .buffered,
                 defer: false
             )
             window.isReleasedWhenClosed = false
-            window.title = "Pair Phone"
+            self?.styleAsCanvas(window)
             window.contentView = NSHostingView(rootView: PairingWindow())
             window.center()
             window.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)
             self?.pairingWindow = window
         }
+    }
+
+    private func styleAsCanvas(_ window: NSWindow) {
+        window.titleVisibility = .hidden
+        window.titlebarAppearsTransparent = true
+        window.styleMask.insert(.fullSizeContentView)
+        window.backgroundColor = .black
+        window.isMovableByWindowBackground = true
     }
 }

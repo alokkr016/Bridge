@@ -20,29 +20,32 @@ struct MenuBarView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             header
-            Divider()
 
             if !serverConnected {
-                offlineBanner
-                Divider()
+                Text("Phone isn’t connected. If this persists after a Mac restart, open Settings and scan the QR again.")
+                    .font(.system(size: 13))
+                    .foregroundStyle(Brand.muted)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, 22)
+                    .padding(.bottom, 8)
             }
 
             if let otp = lastOTP {
-                heroCard(otp)
+                hero(otp)
             } else {
                 emptyState
             }
 
             let rest = Array(recentOTPs.dropFirst().prefix(2))
             if !rest.isEmpty {
-                Divider()
+                hairline
                 recentSection(rest)
             }
 
-            Divider()
+            hairline
             footer
         }
-        .frame(width: 320)
+        .frame(width: 340)
         .background(Brand.canvas)
         .foregroundStyle(Brand.ink)
         .preferredColorScheme(.dark)
@@ -66,246 +69,142 @@ struct MenuBarView: View {
         }
     }
 
-    // MARK: - Header
+    private var hairline: some View {
+        Rectangle()
+            .fill(Brand.line)
+            .frame(height: 1)
+    }
 
     private var header: some View {
-        HStack(spacing: 8) {
-            Image("Logo")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 20, height: 20)
-                .clipShape(RoundedRectangle(cornerRadius: 5))
-            VStack(alignment: .leading, spacing: 1) {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .firstTextBaseline) {
                 Text("Bridge")
-                    .font(.system(size: 13, weight: .semibold))
-                Text("Made with ♥ by [Alok](https://github.com/alokkr016)")
-                    .font(.system(size: 10))
-                    .foregroundStyle(.secondary)
-            }
-
-            Spacer()
-
-            HStack(spacing: 5) {
-                Circle()
-                    .fill(serverConnected ? Color.white : Brand.muted)
-                    .frame(width: 6, height: 6)
+                    .font(.system(size: 22, weight: .semibold))
+                Spacer()
                 Text(serverConnected ? "Live" : "Offline")
-                    .font(.system(size: 11, weight: .medium))
+                    .font(.system(size: 13))
                     .foregroundStyle(Brand.muted)
             }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 3)
-            .background(Capsule().strokeBorder(Brand.line, lineWidth: 1))
+            Text("Made with ♥ by [Alok](https://github.com/alokkr016)")
+                .font(.system(size: 12))
+                .foregroundStyle(Brand.muted)
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
+        .padding(.horizontal, 22)
+        .padding(.top, 18)
+        .padding(.bottom, 16)
     }
 
-    private var offlineBanner: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "wifi.slash")
-                .font(.system(size: 11))
-                .foregroundStyle(Brand.muted)
-            Text("Phone isn’t connected. If this persists after a Mac restart, open Pair New Device and scan the QR again.")
-                .font(.system(size: 11))
-                .foregroundStyle(Brand.muted)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 8)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Brand.surface)
-    }
-
-    // MARK: - Hero card
-
-    private func heroCard(_ item: OTPItem) -> some View {
+    private func hero(_ item: OTPItem) -> some View {
         let isCopied = copiedOTP == item.otp
-
-        return Button(action: { copyOTP(item.otp) }) {
+        return VStack(alignment: .leading, spacing: 14) {
             VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 8) {
-                    sourceAvatar(item.source, size: 18)
-                    Text(item.source)
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(.primary)
-                        .lineLimit(1)
-                    Spacer()
-                    Text(relativeTime(item.date))
-                        .font(.system(size: 10))
-                        .foregroundStyle(.tertiary)
-                }
-
-                HStack(alignment: .firstTextBaseline) {
+                Text("\(item.source)  ·  \(relativeTime(item.date))")
+                    .font(.system(size: 13))
+                    .foregroundStyle(Brand.muted)
+                    .lineLimit(1)
+                Button(action: { copyOTP(item.otp) }) {
                     Text(grouped(item.otp))
-                        .font(.system(size: 30, weight: .semibold, design: .default))
+                        .font(.system(size: 48, weight: .semibold))
                         .foregroundStyle(Brand.ink)
                         .monospacedDigit()
-                    Spacer()
-                    Image(systemName: isCopied ? "checkmark.circle.fill" : "doc.on.doc")
-                        .font(.system(size: 15, weight: .medium))
-                        .foregroundStyle(isCopied ? .green : .secondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(Rectangle())
                 }
-
-                Text(isCopied ? "Copied" : "Click to copy")
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundStyle(isCopied ? .green : .secondary)
+                .buttonStyle(.plain)
             }
-            .padding(12)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Brand.surface)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .strokeBorder(Brand.line, lineWidth: 1)
-                    )
-            )
+
+            Button(action: { copyOTP(item.otp) }) {
+                Text(isCopied ? "Copied" : "Copy")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(.black)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 40)
+                    .background(Color.white, in: Capsule())
+            }
+            .buttonStyle(.plain)
         }
-        .buttonStyle(.plain)
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
-        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isCopied)
+        .padding(.horizontal, 22)
+        .padding(.bottom, 18)
+        .animation(.easeOut(duration: 0.15), value: isCopied)
     }
 
     private var emptyState: some View {
-        VStack(spacing: 6) {
-            Image("Logo")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 36, height: 36)
-                .clipShape(RoundedRectangle(cornerRadius: 8))
-                .opacity(0.9)
+        VStack(alignment: .leading, spacing: 8) {
             Text("Waiting for a code")
-                .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(.secondary)
-            Text("OTPs from your phone appear here and copy automatically.")
-                .font(.system(size: 10))
-                .foregroundStyle(.tertiary)
-                .multilineTextAlignment(.center)
+                .font(.system(size: 28, weight: .semibold))
+            Text("Codes from your phone show up here and copy to the clipboard.")
+                .font(.system(size: 13))
+                .foregroundStyle(Brand.muted)
+                .fixedSize(horizontal: false, vertical: true)
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 22)
-        .padding(.horizontal, 14)
+        .padding(.horizontal, 22)
+        .padding(.bottom, 22)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    // MARK: - Recent
-
     private func recentSection(_ items: [OTPItem]) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text("RECENT")
-                .font(.system(size: 9, weight: .semibold))
-                .foregroundStyle(.tertiary)
-                .padding(.horizontal, 14)
-                .padding(.top, 8)
-                .padding(.bottom, 2)
-
+        VStack(spacing: 0) {
             ForEach(items) { item in
                 recentRow(item)
             }
         }
-        .padding(.bottom, 6)
+        .padding(.vertical, 6)
     }
 
     private func recentRow(_ item: OTPItem) -> some View {
         let isHovered = hoveredID == item.id
         let isCopied = copiedOTP == item.otp
-
         return Button(action: { copyOTP(item.otp) }) {
-            HStack(spacing: 8) {
-                sourceAvatar(item.source, size: 16)
+            HStack(alignment: .firstTextBaseline, spacing: 12) {
                 Text(grouped(item.otp))
-                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    .font(.system(size: 16, weight: .semibold))
                     .monospacedDigit()
-                    .foregroundStyle(.primary)
-                    .frame(width: 78, alignment: .leading)
-
-                Text(item.source)
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Brand.ink)
+                Text(isCopied ? "Copied" : item.source)
+                    .font(.system(size: 13))
+                    .foregroundStyle(Brand.muted)
                     .lineLimit(1)
-
-                Spacer()
-
-                if isCopied {
-                    Image(systemName: "checkmark")
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundStyle(.green)
-                } else if isHovered {
-                    Image(systemName: "doc.on.doc")
-                        .font(.system(size: 10))
-                        .foregroundStyle(.secondary)
-                } else {
-                    Text(relativeTime(item.date))
-                        .font(.system(size: 10))
-                        .foregroundStyle(.tertiary)
-                }
+                Spacer(minLength: 8)
+                Text(relativeTime(item.date))
+                    .font(.system(size: 13))
+                    .foregroundStyle(Brand.muted)
             }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 6)
+            .padding(.horizontal, 22)
+            .padding(.vertical, 10)
             .frame(maxWidth: .infinity)
-            .background(
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(isHovered ? Color.primary.opacity(0.06) : .clear)
-            )
+            .background(isHovered ? Color.white.opacity(0.04) : Color.clear)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .padding(.horizontal, 8)
         .onHover { hovering in
             if hovering { hoveredID = item.id }
             else if hoveredID == item.id { hoveredID = nil }
         }
     }
 
-    private func sourceAvatar(_ source: String, size: CGFloat) -> some View {
-        let letter = source.trimmingCharacters(in: .whitespaces).first.map { String($0).uppercased() } ?? "?"
-        return ZStack {
-            Circle().fill(Color.white.opacity(0.08))
-            Text(letter)
-                .font(.system(size: size * 0.62, weight: .semibold))
-                .foregroundStyle(Brand.ink)
-        }
-        .frame(width: size + 6, height: size + 6)
-    }
-
-    // MARK: - Footer
-
     private var footer: some View {
         HStack {
             Button(action: {
                 NotificationCenter.default.post(name: openSettingsNotification, object: nil)
             }) {
-                HStack(spacing: 6) {
-                    Image(systemName: "slider.horizontal.3")
-                        .font(.system(size: 11))
-                    Text("Settings")
-                        .font(.system(size: 12))
-                }
-                .foregroundStyle(.secondary)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 5)
-                .background(RoundedRectangle(cornerRadius: 6).fill(Color.primary.opacity(0.05)))
+                Text("Settings")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(Brand.ink)
             }
             .buttonStyle(.plain)
-            .padding(.leading, 12)
 
             Spacer()
 
             Button(action: { NSApplication.shared.terminate(nil) }) {
                 Text("Quit")
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(RoundedRectangle(cornerRadius: 6).fill(Color.primary.opacity(0.05)))
+                    .font(.system(size: 13))
+                    .foregroundStyle(Brand.muted)
             }
             .buttonStyle(.plain)
-            .padding(.trailing, 12)
         }
-        .padding(.vertical, 8)
+        .padding(.horizontal, 22)
+        .padding(.vertical, 14)
     }
-
-    // MARK: - Helpers
 
     private func grouped(_ otp: String) -> String {
         guard otp.count == 6, otp.allSatisfy(\.isNumber) else { return otp }
@@ -341,5 +240,3 @@ struct MenuBarView: View {
         serverConnected = WebSocketServer.shared.isConnected
     }
 }
-
-
