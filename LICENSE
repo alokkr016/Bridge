@@ -1,0 +1,23 @@
+Bridge Source License
+
+Copyright (c) 2026 Alok Kumar. All rights reserved.
+
+This license covers the OTP Bridge source code in this repository, including every past and future commit.
+
+1. Contribution
+
+You may read this code and submit contributions — bug fixes, documentation, and other improvements — back to the original repository:
+
+https://github.com/alokkr016/Bridge
+
+You may create a fork only to open a pull request to that repository. The fork must not be published or maintained as a separate copy of this project. Once the pull request is closed, you should delete the fork.
+
+2. No copying
+
+Except for a pull request back to the original repository, you may not copy, reproduce, modify, translate, distribute, publish, sublicense, sell, or include this code, in whole or in part, in any other project, product, or repository.
+
+Checking out an older commit, downloading a release, or finding the code without this file does not grant any extra permission. Those versions are copyrighted on the same terms.
+
+3. No other permission
+
+No other rights are granted. This is not an open-source license.
