@@ -37,6 +37,9 @@ class UpdateManager(private val context: Context) {
             val latestVersionCode = json.getInt("versionCode")
             val latestVersionName = json.getString("versionName")
             val apkUrl = json.getString("apkUrl")
+            if (!isAllowedUpdateUrl(apkUrl)) {
+                return@withContext UpdateInfo(false, 0, "", "", "")
+            }
             val notes = json.optString("notes", "")
             
             val currentVersionCode = getCurrentVersionCode()

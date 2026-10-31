@@ -1,16 +1,6 @@
 import SwiftUI
 import AppKit
 
-/// On/off switch for the incoming-call card. Default is on.
-enum CallHandling {
-    private static let key = "featureCallHandlingEnabled"
-
-    static var enabled: Bool {
-        get { UserDefaults.standard.object(forKey: key) as? Bool ?? true }
-        set { UserDefaults.standard.set(newValue, forKey: key) }
-    }
-}
-
 /// Floating incoming-call card. Audio stays on the phone; these buttons only
 /// tell Android to answer or hang up.
 struct IncomingCallView: View {
@@ -26,6 +16,7 @@ struct IncomingCallView: View {
 
     var body: some View {
         HStack(spacing: 12) {
+            // Icon container with soft background badge
             ZStack {
                 Circle()
                     .fill(ringing ? Color.green.opacity(0.18) : Color.primary.opacity(0.08))
@@ -37,6 +28,7 @@ struct IncomingCallView: View {
                     .symbolEffect(.bounce, options: .repeating, isActive: ringing)
             }
 
+            // Caller details
             VStack(alignment: .leading, spacing: 2) {
                 Text(displayName)
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
@@ -70,6 +62,7 @@ struct IncomingCallView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
+            // Buttons
             HStack(spacing: 8) {
                 if ringing {
                     Button(action: onAnswer) {
@@ -131,7 +124,7 @@ struct IncomingCallView: View {
                 )
                 .shadow(color: .black.opacity(0.2), radius: 16, x: 0, y: 8)
         }
-        .padding(8)
+        .padding(8) // padding around pill for shadow rendering
     }
 }
 
@@ -145,11 +138,6 @@ final class IncomingCallController {
     private init() {}
 
     func handle(state: String, number: String, name: String?) {
-        guard CallHandling.enabled else {
-            hide()
-            NotificationManager.shared.clearIncomingCall()
-            return
-        }
         switch state {
         case "ringing":
             ringing = true
@@ -202,7 +190,7 @@ final class IncomingCallController {
             window.isReleasedWhenClosed = false
             window.isOpaque = false
             window.backgroundColor = .clear
-            window.hasShadow = false
+            window.hasShadow = false // shadow is drawn via SwiftUI for crisp pill edges
             window.level = .floating
             window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
             window.isMovableByWindowBackground = true

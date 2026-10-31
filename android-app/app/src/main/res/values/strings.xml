@@ -9,4 +9,9 @@
     <string name="no_otps">No OTPs received yet</string>
     <string name="notification_listener_permission">Please enable Bridge notification access in Settings</string>
     <string name="pairing_instructions">Point your camera at the QR code displayed on your Mac</string>
+    <string name="send_clipboard">Send clipboard</string>
+    <string name="tile_clipboard_label">Send clipboard to Mac</string>
+    <!-- Shown on the text-selection toolbar, so it must stay short. The infinity
+         mark doubles as Bridge's glyph and keeps the item narrow. -->
+    <string name="send_to_bridge">Send to ∞</string>
 </resources>

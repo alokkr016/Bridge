@@ -1,49 +1,59 @@
 import SwiftUI
 
 struct PairingWindow: View {
-    @State private var pairingURL: String?
+    @Environment(\.dismiss) private var dismiss
+
     @State private var qrImage: NSImage?
     @State private var isListening = false
-    @State private var isConnected = false
+    @State private var didPair = false
     @State private var pairedDeviceId: String?
+    @State private var hostWindow: NSWindow?
+    @State private var macName = Host.current().localizedName ?? "This Mac"
 
     var body: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: 14) {
             Image("Logo")
                 .resizable()
                 .scaledToFit()
-                .frame(width: 72, height: 72)
-                .clipShape(RoundedRectangle(cornerRadius: 16))
-                .shadow(color: .black.opacity(0.2), radius: 6, y: 3)
+                .frame(width: 44, height: 44)
+                .clipShape(RoundedRectangle(cornerRadius: 10))
                 .overlay(alignment: .bottomTrailing) {
-                    if isConnected {
+                    if didPair {
                         Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: 22))
+                            .font(.system(size: 16))
                             .foregroundStyle(.green)
-                            .background(Circle().fill(.background))
+                            .background(Circle().fill(Color(NSColor.windowBackgroundColor)))
                             .offset(x: 4, y: 4)
                     }
                 }
 
-            Text(isConnected ? "Device Connected!" : "Pair Your Android Device")
-                .font(.title2)
-                .fontWeight(.bold)
-
-            if isConnected {
-                Text("Paired with Android device")
-                    .font(.subheadline)
+            VStack(spacing: 4) {
+                Text(didPair ? "Phone paired" : "Pair this Mac")
+                    .font(.system(size: 17, weight: .semibold))
+                Text(didPair ? "OTPs from your phone will appear here." : macName)
+                    .font(.system(size: 12))
                     .foregroundStyle(.secondary)
-                if let id = pairedDeviceId {
-                    Text("Device: \(String(id.prefix(8)))...")
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
+                    .lineLimit(1)
+            }
+
+            if didPair {
+                VStack(spacing: 10) {
+                    Label("Ready to receive codes", systemImage: "checkmark.circle.fill")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(.green)
+                    if let id = pairedDeviceId {
+                        Text("Phone \(id.prefix(8))…")
+                            .font(.system(size: 11))
+                            .foregroundStyle(.tertiary)
+                    }
+                    Button("Done") { close() }
+                        .keyboardShortcut(.defaultAction)
+                        .controlSize(.large)
                 }
-                Label("Ready to receive OTPs", systemImage: "checkmark.circle.fill")
-                    .font(.headline)
-                    .foregroundStyle(.green)
+                .padding(.top, 8)
             } else {
-                Text("Open Bridge on your Android phone\nand tap 'Pair with Mac'")
-                    .font(.subheadline)
+                Text("On your phone open Bridge → Add Mac or iPad\nand scan this code.")
+                    .font(.system(size: 12))
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
 
@@ -51,64 +61,81 @@ struct PairingWindow: View {
                     Image(nsImage: img)
                         .resizable()
                         .interpolation(.none)
-                        .frame(width: 300, height: 300)
-                        .padding(16)
+                        .frame(width: 220, height: 220)
+                        .padding(12)
                         .background(Color.white)
-                        .cornerRadius(16)
-                        .shadow(color: .black.opacity(0.15), radius: 8, y: 4)
+                        .clipShape(RoundedRectangle(cornerRadius: 14))
                 } else {
                     ProgressView()
-                        .frame(width: 300, height: 300)
+                        .frame(width: 244, height: 244)
                 }
 
-                if isListening {
-                    HStack(spacing: 8) {
-                        ProgressView()
-                            .controlSize(.small)
-                        Text("Waiting for connection...")
-                            .font(.subheadline)
-                            .foregroundStyle(.blue)
-                    }
+                HStack(spacing: 6) {
+                    ProgressView()
+                        .controlSize(.small)
+                    Text(isListening ? "Waiting for a scan…" : "Preparing…")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
                 }
-            }
 
-            Button(action: startPairing) {
-                Label(isConnected ? "Done" : (isListening ? "Listening..." : "Start Pairing"), systemImage: isConnected ? "checkmark" : "antenna.radiowaves.left.and.right")
-                    .frame(maxWidth: .infinity)
+                Button("Close") { close() }
+                    .controlSize(.large)
+                    .keyboardShortcut(.cancelAction)
             }
-            .controlSize(.large)
-            .disabled(isListening && !isConnected)
         }
-        .padding(40)
-        .frame(width: 400, height: 520)
-        .onAppear {
-            startPairing()
-            Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
-                if WebSocketServer.shared.isConnected && !self.isConnected {
-                    DispatchQueue.main.async {
-                        self.isConnected = true
-                    }
-                }
-            }
+        .padding(.horizontal, 28)
+        .padding(.top, 20)
+        .padding(.bottom, 24)
+        .frame(width: 360)
+        .background(WindowAccessor { hostWindow = $0 })
+        .onAppear(perform: startPairing)
+        .onDisappear {
+            WebSocketServer.shared.onNewPairingCompleted = nil
+            PairingManager.shared.endPairingMode()
         }
     }
 
+    private func close() {
+        PairingManager.shared.endPairingMode()
+        hostWindow?.close()
+        dismiss()
+    }
+
     private func startPairing() {
-        if isConnected { return }
+        didPair = false
         PairingManager.shared.beginPairingMode()
-        pairingURL = PairingManager.shared.getPairingURL()
-        if let url = pairingURL {
+        if let url = PairingManager.shared.getPairingURL() {
             qrImage = QRCodeGenerator.generate(from: url)
         }
 
-        WebSocketServer.shared.onHandshakeReceived = { deviceId, publicKey in
+        WebSocketServer.shared.onNewPairingCompleted = { deviceId, _ in
             DispatchQueue.main.async {
-                self.isConnected = true
-                self.pairedDeviceId = deviceId
+                didPair = true
+                pairedDeviceId = deviceId
+                PairingManager.shared.endPairingMode()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                    close()
+                }
             }
         }
 
         WebSocketServer.shared.start()
         isListening = true
+    }
+}
+
+/// Reaches the NSWindow hosting this SwiftUI view so it can close itself
+/// without the view needing a reference to the AppDelegate.
+private struct WindowAccessor: NSViewRepresentable {
+    let onResolve: (NSWindow?) -> Void
+
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        DispatchQueue.main.async { onResolve(view.window) }
+        return view
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {
+        DispatchQueue.main.async { onResolve(nsView.window) }
     }
 }

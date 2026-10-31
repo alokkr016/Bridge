@@ -20,11 +20,13 @@ android {
     compileSdk = 35
 
     defaultConfig {
+        // Keep the published id so installed phones update in place.
+        // The Kotlin namespace stays io.github.alokkr016.otpbridge.
         applicationId = "io.github.alokkr016.otpbridge"
         minSdk = 26
         targetSdk = 35
-        versionCode = 10006
-        versionName = "1.0.6"
+        versionCode = 10007
+        versionName = "1.0.7"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
@@ -63,6 +65,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     packaging {
@@ -109,10 +112,12 @@ dependencies {
 
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
-    implementation("androidx.security:security-crypto:1.1.0-alpha06")
 
     // DataStore (for pairing prefs)
     implementation("androidx.datastore:datastore-preferences:1.0.0")
+
+    // Keystore-backed encryption for identity keys and paired secrets
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
 
     // WorkManager — periodic watchdog to restart the foreground service if Samsung kills it
     implementation("androidx.work:work-runtime-ktx:2.9.0")

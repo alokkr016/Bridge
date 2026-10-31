@@ -47,3 +47,12 @@ fastlane/test_output
 # Crashlytics
 crashlytics.properties
 crashlytics-build.properties
+
+# Emulator screenshots from icon iteration (regenerable)
+android-app/art/emu-*.png
+
+# Built installer
+mac-app/*.dmg
+
+# graphify tool cache
+graphify-out/cache/

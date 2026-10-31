@@ -20,6 +20,8 @@ import io.github.alokkr016.otpbridge.MainActivity
 import io.github.alokkr016.otpbridge.R
 import io.github.alokkr016.otpbridge.notification.NotificationHelper
 import io.github.alokkr016.otpbridge.call.CallController
+import io.github.alokkr016.otpbridge.clipboard.ClipboardRelayActivity
+import io.github.alokkr016.otpbridge.clipboard.ClipboardTileService
 import io.github.alokkr016.otpbridge.pairing.BLEScanner
 import io.github.alokkr016.otpbridge.websocket.WebSocketClient
 
@@ -27,7 +29,7 @@ class BridgeForegroundService : Service() {
 
     companion object {
         private const val TAG = "BridgeForegroundService"
-        const val CHANNEL_ID = "otp_bridge_channel"
+        const val CHANNEL_ID = NotificationHelper.CHANNEL_ID
         const val NOTIFICATION_ID = 1002
     }
 
@@ -67,9 +69,15 @@ class BridgeForegroundService : Service() {
             webSocketClient.reconnect()
         }
 
-        // When TCP connection drops, scan BLE to find Mac's new IP (requires runtime BT permission)
+        // Handshake means we have the right IP — stop burning BLE.
+        webSocketClient.onHandshakeComplete = {
+            Log.d(TAG, "Handshake complete — stopping BLE watch")
+            bleScanner.stopWatching()
+        }
+
+        // Drop or failed connect: keep scanning until the Mac advertises a new IP
         webSocketClient.onDisconnected = {
-            Log.d(TAG, "Connection lost — starting BLE scan for Mac IP")
+            Log.d(TAG, "Connection lost — watching BLE for Mac IP")
             tryStartBLEScan()
         }
 
@@ -80,6 +88,10 @@ class BridgeForegroundService : Service() {
             callController.handleControl(action)
         }
         callController.start()
+
+        // Ask SystemUI to bind the QS tile so it has a live state and reliably
+        // delivers taps even when this process has been idle.
+        ClipboardTileService.requestListening(this)
 
         webSocketClient.connect()
 
@@ -97,7 +109,7 @@ class BridgeForegroundService : Service() {
             return
         }
         try {
-            bleScanner.startScan()
+            bleScanner.startWatching()
         } catch (e: SecurityException) {
             Log.w(TAG, "BLE scan denied: ${e.message}")
         } catch (e: Exception) {
@@ -107,7 +119,7 @@ class BridgeForegroundService : Service() {
 
     override fun onDestroy() {
         callController.stop()
-        bleScanner.stopScan()
+        bleScanner.stopWatching()
         wakeLock?.release()
         wifiLock?.release()
         webSocketClient.disconnect()
@@ -141,11 +153,25 @@ class BridgeForegroundService : Service() {
             Intent(this, MainActivity::class.java),
             PendingIntent.FLAG_IMMUTABLE
         )
+        // The service itself can't read the clipboard (no window focus), so this
+        // action routes through the invisible relay activity, which can.
+        val clipIntent = PendingIntent.getActivity(
+            this, 1,
+            Intent(this, ClipboardRelayActivity::class.java).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            },
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setSmallIcon(R.drawable.ic_stat_infinity)
             .setContentTitle("Bridge")
             .setContentText("Running in background")
             .setContentIntent(pendingIntent)
+            .addAction(
+                android.R.drawable.ic_menu_send,
+                getString(R.string.send_clipboard),
+                clipIntent
+            )
             .setOngoing(true)
             .build()
     }

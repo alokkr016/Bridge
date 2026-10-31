@@ -35,6 +35,7 @@ class CryptoManager(context: Context) {
         return SessionCrypto.deriveKey(rawSecret, raw32(myPublic), raw32(theirPublicKey))
     }
 
+    /** Encrypts [plaintext] as a versioned, sequenced frame. */
     fun seal(plaintext: ByteArray, aesKey: ByteArray, seq: Long): ByteArray {
         val wrapper = JSONObject()
             .put("v", 2)
@@ -48,8 +49,7 @@ class CryptoManager(context: Context) {
         if (outer.optInt("v") != 2) throw IllegalArgumentException("unsupported frame")
         val seq = outer.getLong("seq")
         if (seq <= 0L) throw IllegalArgumentException("bad sequence")
-        val body = outer.getString("body").toByteArray(Charsets.UTF_8)
-        return OpenedFrame(seq, body)
+        return OpenedFrame(seq, outer.getString("body").toByteArray(Charsets.UTF_8))
     }
 
     private fun raw32(key: java.security.Key): ByteArray {
