@@ -1,0 +1,7 @@
+{
+  "name": "bridge-updater",
+  "main": "src/index.js",
+  "compatibility_date": "2026-10-31",
+  "account_id": "d30b838d8d90d2c74a77cdd754e7c013",
+  "workers_dev": true
+}
