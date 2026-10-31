@@ -26,7 +26,7 @@ export default {
 
 async function latestRelease() {
   const cache = caches.default;
-  const key = new Request(RELEASE_URL);
+  const key = new Request("https://bridge-updater.alokraj016.workers.dev/cache/latest-release");
   const hit = await cache.match(key);
   if (hit) return hit.json();
 
