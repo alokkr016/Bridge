@@ -31,6 +31,13 @@ struct HomeView: View {
                 .frame(maxWidth: .infinity)
             }
             .navigationTitle("Bridge")
+            .safeAreaInset(edge: .bottom) {
+                Text("Made with ♥ by [Alok](https://github.com/alokkr016)")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 8)
+            }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { showSettings = true } label: {

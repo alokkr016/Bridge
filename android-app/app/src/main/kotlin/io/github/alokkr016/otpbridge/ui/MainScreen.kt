@@ -111,6 +111,19 @@ fun MainScreen(viewModel: MainViewModel = viewModel()) {
                 )
             )
         },
+        bottomBar = {
+            Surface(color = MaterialTheme.colorScheme.surface) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .navigationBarsPadding()
+                        .padding(vertical = 10.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    MadeByAlok()
+                }
+            }
+        },
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         when {

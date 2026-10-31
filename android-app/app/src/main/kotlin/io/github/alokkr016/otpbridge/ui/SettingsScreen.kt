@@ -248,7 +248,7 @@ fun SettingsScreen(
 }
 
 @Composable
-private fun MadeByAlok() {
+internal fun MadeByAlok() {
     val context = LocalContext.current
     val link = "https://github.com/alokkr016"
     val credit = buildAnnotatedString {
