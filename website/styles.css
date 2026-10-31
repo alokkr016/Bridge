@@ -1,0 +1,123 @@
+:root {
+  color-scheme: dark;
+  --bg: #000;
+  --fg: #ededed;
+  --muted: #a1a1a1;
+  --line: rgba(255, 255, 255, 0.12);
+  --sans: "Geist", "Geist Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+img { display: block; }
+
+a { color: inherit; }
+
+:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+
+.nav, main, footer {
+  width: min(720px, calc(100% - 40px));
+  margin-inline: auto;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 560;
+  letter-spacing: -0.03em;
+  text-decoration: none;
+}
+
+.brand img { width: 22px; height: 22px; border-radius: 6px; }
+
+.nav a:last-child {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.nav a:last-child:hover { color: var(--fg); }
+
+.eyebrow {
+  margin: 48px 0 12px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(36px, 6vw, 52px);
+  line-height: 1.05;
+  letter-spacing: -0.045em;
+  font-weight: 560;
+}
+
+.lede {
+  margin: 16px 0 8px;
+  color: var(--muted);
+  max-width: 46ch;
+}
+
+.features {
+  list-style: none;
+  margin: 36px 0 0;
+  padding: 0;
+  border-top: 1px solid var(--line);
+}
+
+.features li {
+  padding: 20px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+h2 {
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 560;
+  letter-spacing: -0.02em;
+}
+
+.features p {
+  margin: 0;
+  color: var(--muted);
+}
+
+footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 28px 0 40px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+footer p { margin: 0; }
+
+footer a { color: var(--fg); }
+
+.heart { color: #e11d48; }
+
+@media (max-width: 640px) {
+  footer { flex-direction: column; }
+}
