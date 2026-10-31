@@ -3,6 +3,7 @@ package io.github.alokkr016.otpbridge.ui
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -349,8 +350,9 @@ private fun OfflineBanner(
 @Composable
 private fun WaitingForOtpCard(isConnected: Boolean) {
     Surface(
-        shape = RoundedCornerShape(20.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
     ) {
         Column(
             modifier = Modifier
@@ -383,9 +385,9 @@ private fun HeroOtpCard(
 ) {
     Surface(
         onClick = onCopy,
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.primaryContainer,
-        tonalElevation = 2.dp
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
     ) {
         Column(Modifier.padding(20.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -435,7 +437,8 @@ private fun RecentOtpRow(
     Surface(
         onClick = onCopy,
         shape = RoundedCornerShape(14.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
     ) {
         Row(
             modifier = Modifier

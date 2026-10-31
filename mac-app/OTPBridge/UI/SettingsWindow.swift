@@ -34,7 +34,9 @@ struct SettingsWindow: View {
             }
         }
         .frame(width: 420, height: 560)
-        .background(Color(NSColor.windowBackgroundColor))
+        .background(Brand.canvas)
+        .foregroundStyle(Brand.ink)
+        .preferredColorScheme(.dark)
         .sheet(isPresented: $showPairing) {
             PairingWindow()
         }

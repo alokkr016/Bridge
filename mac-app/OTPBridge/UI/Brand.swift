@@ -1,8 +1,9 @@
 import SwiftUI
 
 enum Brand {
-    static let indigo = Color(red: 78 / 255, green: 75 / 255, blue: 166 / 255)
-    static let indigoDeep = Color(red: 42 / 255, green: 39 / 255, blue: 120 / 255)
-    static let orange = Color(red: 1, green: 138 / 255, blue: 61 / 255)
-    static let teal = Color(red: 184 / 255, green: 232 / 255, blue: 224 / 255)
+    static let canvas = Color.black
+    static let surface = Color(white: 17.0 / 255.0)
+    static let line = Color.white.opacity(0.12)
+    static let ink = Color(white: 237.0 / 255.0)
+    static let muted = Color(white: 161.0 / 255.0)
 }

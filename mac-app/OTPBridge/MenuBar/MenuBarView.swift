@@ -43,7 +43,9 @@ struct MenuBarView: View {
             footer
         }
         .frame(width: 320)
-        .background(.regularMaterial)
+        .background(Brand.canvas)
+        .foregroundStyle(Brand.ink)
+        .preferredColorScheme(.dark)
         .onAppear {
             loadRecentOTPs()
             setupCallbacks()
@@ -85,17 +87,15 @@ struct MenuBarView: View {
 
             HStack(spacing: 5) {
                 Circle()
-                    .fill(serverConnected ? Color.green : Color.secondary.opacity(0.45))
+                    .fill(serverConnected ? Color.white : Brand.muted)
                     .frame(width: 6, height: 6)
                 Text(serverConnected ? "Live" : "Offline")
                     .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(serverConnected ? .green : .secondary)
+                    .foregroundStyle(Brand.muted)
             }
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
-            .background(
-                Capsule().fill(serverConnected ? Color.green.opacity(0.12) : Color.secondary.opacity(0.1))
-            )
+            .background(Capsule().strokeBorder(Brand.line, lineWidth: 1))
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
@@ -105,16 +105,16 @@ struct MenuBarView: View {
         HStack(spacing: 8) {
             Image(systemName: "wifi.slash")
                 .font(.system(size: 11))
-                .foregroundStyle(.orange)
+                .foregroundStyle(Brand.muted)
             Text("Phone isn’t connected. If this persists after a Mac restart, open Pair New Device and scan the QR again.")
                 .font(.system(size: 11))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Brand.muted)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 8)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Brand.orange.opacity(0.08))
+        .background(Brand.surface)
     }
 
     // MARK: - Hero card
@@ -138,8 +138,8 @@ struct MenuBarView: View {
 
                 HStack(alignment: .firstTextBaseline) {
                     Text(grouped(item.otp))
-                        .font(.system(size: 30, weight: .bold, design: .rounded))
-                        .foregroundStyle(Brand.orange)
+                        .font(.system(size: 30, weight: .semibold, design: .default))
+                        .foregroundStyle(Brand.ink)
                         .monospacedDigit()
                     Spacer()
                     Image(systemName: isCopied ? "checkmark.circle.fill" : "doc.on.doc")
@@ -155,10 +155,10 @@ struct MenuBarView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(Brand.indigo.opacity(0.14))
+                    .fill(Brand.surface)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .strokeBorder(Brand.indigo.opacity(isCopied ? 0.45 : 0.22), lineWidth: 1)
+                            .strokeBorder(Brand.line, lineWidth: 1)
                     )
             )
         }
@@ -260,10 +260,10 @@ struct MenuBarView: View {
     private func sourceAvatar(_ source: String, size: CGFloat) -> some View {
         let letter = source.trimmingCharacters(in: .whitespaces).first.map { String($0).uppercased() } ?? "?"
         return ZStack {
-            Circle().fill(Brand.indigo.opacity(0.22))
+            Circle().fill(Color.white.opacity(0.08))
             Text(letter)
-                .font(.system(size: size * 0.62, weight: .bold))
-                .foregroundStyle(Brand.indigo)
+                .font(.system(size: size * 0.62, weight: .semibold))
+                .foregroundStyle(Brand.ink)
         }
         .frame(width: size + 6, height: size + 6)
     }

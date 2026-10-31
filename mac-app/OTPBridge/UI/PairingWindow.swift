@@ -87,6 +87,9 @@ struct PairingWindow: View {
         .padding(.top, 20)
         .padding(.bottom, 24)
         .frame(width: 360)
+        .background(Brand.canvas)
+        .foregroundStyle(Brand.ink)
+        .preferredColorScheme(.dark)
         .background(WindowAccessor { hostWindow = $0 })
         .onAppear(perform: startPairing)
         .onDisappear {

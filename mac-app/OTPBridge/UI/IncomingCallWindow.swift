@@ -106,21 +106,10 @@ struct IncomingCallView: View {
         .frame(minWidth: 260, maxWidth: 300)
         .background {
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(.ultraThinMaterial)
+                .fill(Brand.canvas)
                 .overlay(
                     RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .stroke(
-                            LinearGradient(
-                                colors: [
-                                    Color.white.opacity(0.25),
-                                    Color.white.opacity(0.05),
-                                    Color.black.opacity(0.1)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 1
-                        )
+                        .stroke(Brand.line, lineWidth: 1)
                 )
                 .shadow(color: .black.opacity(0.2), radius: 16, x: 0, y: 8)
         }
